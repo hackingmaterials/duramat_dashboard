@@ -8,6 +8,7 @@ import dash_html_components as html
 import dash_table_experiments as dt
 
 from app import app, client
+from misc.misc_pages import serve_header, serve_error
 
 # from clearsky import cs_dashboard
 
@@ -20,66 +21,64 @@ encoded_logo = base64.b64encode(open('./images/duramat_logo.png', 'rb').read())
 encoded_degradation = base64.b64encode(open('./images/icon-data-management.png', 'rb').read())
 encoded_clearsky = base64.b64encode(open('./images/icon-module-testing.png', 'rb').read())
 
-header = html.Div([
-    dcc.Location(id='header-url', refresh=False),
-    html.Nav(
-        style={
-            'jutifyContent': 'spaceAround',
-            'textAlign': 'center'
-        },
-        children=[
-            html.Span(
-                html.Img(src='data:image/png;base64,{}'.format(encoded_logo.decode()),
-                              style={'width': '200px'}, className='container')
-            ),
-            html.Span(
-                dcc.Link('Home', href='/', style={'fontSize': '20pt'}),
-            style={'margin': 'auto'}),
-            # style={'margin': 'auto', 'width': '100px'}),
-            html.Span(
-                dcc.Link('Degradation Dashboard', href='/degradation',
-                         style={'margin': 'atuo', 'fontSize': '20pt'}),
-            style={'margin': 'auto'}),
-            # style={'margin': 'auto', 'width': '100px'}),
-            html.Span(
-                dcc.Link('Clear Sky Detection', href='/clearsky',
-                         style={'margin': 'atuo', 'fontSize': '20pt'}),
-            style={'margin': 'auto'}),
-        ],
-        id='nav_bar'),
-], className='row',)
 
-layout = \
-html.Div([
-    # header,
-    html.Div([
-        html.Img(src='data:image/png;base64,{}'.format(encoded_logo.decode()),
-                 style={'width': '275px', 'float': 'right', 'position': 'relative'}, className='container'),
-        html.Div([
-            html.H1(children='DuraMAT Data Analytics Dashboard', style={'position': 'relative', 'textAlign': 'center'}),
-            # html.H6('Developed by the Hacking Materials Research Group at Lawrence Berkeley National Laboratory', style={'textAlign': 'center'}),
-            html.P('Select a link below in order to navigate to a specific dashboard.  '
-                   'Please contact us with requests for dashboard-specific features, '
-                   'new dashboards, or if if you\'re interested in sharing data.', style={'textAlign': 'center'}),
-        ], className='container')
-    ], className='row'),
+
+
+
+layout = html.Div([
+    serve_header(),
     html.Br(),
+    html.H1('DuraMAT Data Analytics'),
     html.Div([
-        html.Div([
-            dcc.Link('PV Degradation', href='/degradation', className='six columns', style={'textAlign': 'center'}),
-            # dcc.Link('Clear sky detection', href='/clearsky', className='six columns', style={'textAlign': 'center'})
-        ]),
-    ], className='row'),
+        html.P('The Durable Module Materials Consortium (DuraMAT) combines government, academic, and industry '
+                'expertise in order to discover, de-risk, and enable commercialization of new material designs '
+                'for photovoltaic (PV) modules.  This project works in concert with other Department of Energy (DOE) '
+                'projects to help realize a levelized cost of electricity less than 3 cents per kilowatt-hour.'),
+        html.P('A large part of the DuraMAT effort is developing data analytics, visualization, and machine learning '
+               'tools to accelerate research.  This website will showcase current and completed data-driven projects '
+               'through interactive visualaztion and analytics pipelines.'),
+        html.P('For more information on DuraMAT, follow the link in the navigation bar at the top of the page.  '
+               'If you are interested in sharing your data with DuraMAT, with the potenial of developing interactive '
+               'dashboards, please start by visiting the DuraMAT DataHub link above.'),
+    ], style={'margin-left': '20px'}),
+    html.H2('Dashboards'),
     html.Div([
         html.Div([
             html.Div([
-                html.Img(src='data:image/png;base64,{}'.format(encoded_degradation.decode()), style={'width': '300px', 'display': 'block'}, className='container'),
-            ], className='six columns'),
-            # html.Div([
-            #     html.Img(src='data:image/png;base64,{}'.format(encoded_clearsky.decode()), style={'width': '300px', 'display': 'block'}, className='container'),
-            # ], className='six columns'),
-        ])
-    ], className='row'),
+                dcc.Link('PV Degradation', href='/degradation',
+                         style={'display': 'inline-block', 'text-decoration': 'none'}),
+            ]),
+            html.Div([
+                html.Div([
+                    html.P('Explore degradation of PV systems across the United States.  '
+                           'Select different systems based on' 'nameplate size, technology type, '
+                           'geographic location, and so on.  Apply data filters and apply '
+                           'degradation rate calculations such as ordinary least squares or year-on-year.',
+                           style={'textAlign': 'justfiy', 'text-justify': 'inter-word'})],
+                           style={'float': 'left', 'width': '700px'}),
+                # html.Div([
+                #     html.Img(src='data:image/png;base64,{}'.format(encoded_degradation.decode()), style={'width': '125px'}),
+                # ], style={'margin-left': '720px', 'vertical-align': 'top', 'float': 'left'})
+            ], style={'display': 'inline-block'}),
+        ], style={'float': 'left'}),
+        html.Div([
+            html.Div([
+                dcc.Link('Clear sky detection', href='/clearsky',
+                         style={'display': 'inline-block', 'text-decoration': 'none'}),
+            ]),
+            html.Div([
+                html.Div([
+                    html.P('Interactively explore PVLib\'s clear sky detection algorithm.  '
+                           'Set the parameters and score classifications against known sky conditions.  Use your '
+                           'optimal parameters downstream in your degradation rate calculations or visit the '
+                           'PV Degradation dashboard to see its effect.')],
+                    style={'textAlign': 'justfiy', 'textJustify': 'inter-word'})],
+                style={'float': 'left', 'width': '700px'}),
+                # html.Div([
+                #     html.Img(src='data:image/png;base64,{}'.format(encoded_clearsky.decode()), style={'width': '125px'}),
+                # ], style={'margin-left': '720px', 'vertical-align': 'top', 'float': 'left'})
+            ], style={'float': 'left'}),
+    ], style={'margin-left': '20px'})
 ])
 
 
@@ -97,13 +96,14 @@ app.layout = html.Div([
 def display_page(pathname):
     if pathname == '/degradation':
         return deg_dashboard.serve_layout(deg_db_handler)
-        # return deg_dashboard.app_layout
     elif pathname == '/clearsky':
         # return deg_dashboard.serve_layout(deg_db_handler)
         # return deg_dashboard.app_layout
         # cs_dashboard.SCORES = []
         # return cs_dashboard.app_layout
-        pass
+        return serve_error()
+        # pass
+    # elif pathname == ''
     else:
         return layout
 

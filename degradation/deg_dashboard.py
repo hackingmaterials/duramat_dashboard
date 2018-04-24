@@ -6,6 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
 import plotly.graph_objs as go
+from misc.misc_pages import serve_header
 
 from . import utils
 
@@ -22,18 +23,21 @@ def serve_layout(db_handler):
     # degradation page layout
     app_layout =  \
     html.Div([
-        html.H1(children='PV Degradation Dashboard', style={'textAlign': 'center'}),
-            html.H6('Explore PV performance and degradation data over time.  ',
-                    style={'textAlign': 'center'}),
-            html.P('Click \'Back\' button in your browser to return to the homepage.', style={'textAlign': 'center'}),
+        serve_header(),
+        html.H1(children='PV Degradation Dashboard'),
+            html.P('Explore PV performance and degradation data over time.  Select sites on the map by clicking them '
+                   'or by selecting them in the table to the right.  Sites can be de-selected by clicking them on '
+                   'the map a second time, or by un-checking them in the table.  Once you have selected the desired '
+                   'sites, scroll down for additional options and analysis.  Summary statistics for the sites you '
+                   'have chosen will be presented at the end.'),
             html.Div([html.H3('Systems overview', style={'textAlign': 'center'}),
             # html.Div([html.H3('Site Map', style={'textAlign': 'center'}),
             # html.Div([html.P('Hover over site to see preview.  If nothing shows, then the site is missing production data. '
             #                  'Click on a point to enable further analysis.  Clicking point again will remove it from '
             #                  'further analysis.', style={'textAlign': 'center'})]),
-            html.Div([html.P('Select sites for further analysis by clicking them on the map or selecting them '
-                             'in the adjacent table.  Scroll down once the desired sites have been slected.',
-                             style={'textAlign': 'center'})]),
+            # html.Div([html.P('Select sites for further analysis by clicking them on the map or selecting them '
+            #                  'in the adjacent table.  Scroll down once the desired sites have been slected.',
+            #                  style={'textAlign': 'center'})]),
             html.Div([
                 html.Div([
                         dcc.Graph(id='degradation-map', animate=True,
@@ -44,19 +48,6 @@ def serve_layout(db_handler):
                 ], className='six columns'),
                 html.Div([
                     html.Div([
-                    #     dcc.RadioItems(
-                    #         id='degradation-table_sort_col',
-                    #         options=[{'label': i, 'value': i} for i in ['ID', 'System Size(W)', 'State', 'Active Days']],
-                    #         value='ID',
-                    #         labelStyle={'display': 'inline-block'}, className='six columns'
-                    #     ),
-                    #     # html.P(' | ', className='one column'),
-                    #     dcc.RadioItems(
-                    #         id='degradation-table_sort_dir',
-                    #         options=[{'label': 'Ascending', 'value': True}, {'label': 'Descending', 'value': False}],
-                    #         value=True,
-                    #         labelStyle={'display': 'inline-block'}, className='six columns'
-                    #     )
                     ], style={'height': '38px'}),
                     dt.DataTable(
                         rows=metadata[['ID', 'System Name', 'System Size(W)', 'State',
@@ -96,8 +87,8 @@ def serve_layout(db_handler):
                               placeholder='High production cutoff', className='three columns'),
                 ], className='row'),
             ], className='container', style={'justifyContent': 'center'}),
-            html.P('You can select multiple smoothing and rate calculation strategies.  Be patient if large number of '
-                   'sites or large data sets have been selected.', style={'textAlign': 'center'}),
+            html.P('Select desired smoothing and rate calculation strategies.  Be patient if you have selected '
+                   'a large number of sites and/or several calculation methods.', style={'textAlign': 'center'}),
             html.Div([
                 html.Div([
                     html.Div([
