@@ -35,7 +35,7 @@ def serve_layout():
         html.P(description2),
         html.Div([
             html.Div([
-                html.H4('Select data set: '),
+                html.H5('Select data set: '),
                 dcc.Dropdown(
                     id='cs-site',
                     options=[{'label': i, 'value': i} for i in files],
@@ -43,7 +43,7 @@ def serve_layout():
                 )
             ], className='three columns'),
             html.Div([
-                html.H4(children='Select start and end dates: '),
+                html.H5(children='Select start and end dates: '),
                 html.Div([
                     html.Div([
                         dcc.Input(
@@ -66,7 +66,7 @@ def serve_layout():
         ], className='row', style={'fontSize': '14'}),
         html.Div([
             html.Div([
-                html.H4(children='Select data frequency: '),
+                html.H5(children='Select data frequency: '),
                 dcc.Dropdown(
                     id='cs-freq',
                     options=[{'label': '{} minutes'.format(i), 'value': i} for i in [1, 5, 10, 15, 30]],
@@ -74,7 +74,7 @@ def serve_layout():
                 )
             ], className='three columns'),
             html.Div([
-                html.H4(children='Set window length (minutes): '),
+                html.H5(children='Set window length (minutes): '),
                 dcc.Input(
                     id='cs-window_length_slider',
                     min=0,
@@ -86,7 +86,7 @@ def serve_layout():
                 )
             ], className='three columns'),
             html.Div([
-                html.H4(children='Set average difference: '),
+                html.H5(children='Set average difference: '),
                 dcc.Input(
                     id='cs-mean_diff_slider',
                     min=0,
@@ -98,7 +98,7 @@ def serve_layout():
                 )
             ] , className='three columns'),
             html.Div([
-                html.H4(children='Set maximum difference: '),
+                html.H5(children='Set maximum difference: '),
                 dcc.Input(
                     id='cs-max_diff_slider',
                     min=0,
@@ -112,7 +112,7 @@ def serve_layout():
         ], className='row'),
         html.Div([
             html.Div([
-                html.H4('Set upper line length: '),
+                html.H5('Set upper line length: '),
                 dcc.Input(
                     id='cs-upper_ll_slider',
                     min=0,
@@ -124,7 +124,7 @@ def serve_layout():
                 )
             ], className='three columns'),
             html.Div([
-                html.H4('Set lower line length: '),
+                html.H5('Set lower line length: '),
                 dcc.Input(
                     id='cs-lower_ll_slider',
                     min=-500,
@@ -136,7 +136,7 @@ def serve_layout():
                 )
             ], className='three columns'),
             html.Div([
-                html.H4('Set standard deviation of slopes: '),
+                html.H5('Set standard deviation of slopes: '),
                 dcc.Input(
                     id='cs-vardiff_slider',
                     min=0,
@@ -148,7 +148,7 @@ def serve_layout():
                 )
             ], className='three columns'),
             html.Div([
-                html.H4('Set maximum difference of slopes: '),
+                html.H5('Set maximum difference of slopes: '),
                 dcc.Input(
                     id='cs-slopedev_slider',
                     min=0,
@@ -160,69 +160,6 @@ def serve_layout():
                 )
             ], className='three columns'),
         ], className='row'),
-            # html.Div([
-            #     html.H4(['Mean difference:  ',
-            #         dcc.Input(
-            #             id='cs-mean_diff_slider',
-            #             min=0,
-            #             max=500,
-            #             step=1,
-            #             value=75,
-            #             type='number',
-            #             # marks={str(i): i for i in np.arange(0, 501, 25)}
-            #         )] , className='six columns'),
-            #     html.H4(['Max difference',
-            #         dcc.Input(
-            #             id='cs-max_diff_slider',
-            #             min=0,
-            #             max=500,
-            #             step=1,
-        #                 value=75,
-        #                 type='number',
-        #                 # marks={str(i): i for i in np.arange(0, 501, 25)}
-        #         )] , className='six columns')
-        #     ], style={'width': '90%'}),
-        #     html.H4([
-        #     html.H4(['Upper line length',
-        #         dcc.Slider(
-        #             id='cs-upper_ll_slider',
-        #             min=0,
-        #             max=500,
-        #             step=1,
-        #             value=10,
-        #             marks={str(i): i for i in np.arange(0, 501, 25)}
-        #         )] , className='six columns'),
-        #     html.H4(['Lower line length',
-        #         dcc.Slider(
-        #             id='cs-lower_ll_slider',
-        #             min=-500,
-        #             max=0,
-        #             step=1,
-        #             value=-5,
-        #             marks={str(i): i for i in np.arange(-500, 0, 25)}
-        #         )] , className='six columns')
-        #     ], style={'width': '90%'}),
-        #     html.H4([
-        #     html.H4(['Standard deviation of slope',
-        #         dcc.Slider(
-        #             id='cs-vardiff_slider',
-        #             min=0,
-        #             max=1,
-        #             step=.005,
-        #             value=0.005,
-        #             marks={str(np.round(i, 4)): str(np.round(i, 4)) for i in np.arange(0, 1, .05)}
-        #         )] , className='six columns'),
-        #     html.H4(['Max slope difference',
-        #         dcc.Slider(
-        #             id='cs-slopedev_slider',
-        #             min=0,
-        #             max=500,
-        #             step=1,
-        #             value=8,
-        #             marks={str(i): i for i in np.arange(0, 501, 25)}
-        #         )] , className='six columns'),
-        #     ], style={'width': '90%'})
-        # ], className='row'),
         html.Div(id='cs-output'),
         html.Div(id='cs-hidden', style={'display': 'none'}),
         html.Div(id='cs-hidden_data')
