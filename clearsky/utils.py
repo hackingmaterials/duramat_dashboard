@@ -9,8 +9,8 @@ from clearsky.clearsky_detection import cs_detection
 
 
 def read_df(file):
-    ground_df = pd.read_pickle(os.path.join('./clearsky/data', 'ornl_irrad_ground.pkl.gzip'))
-    nsrdb_df = pd.read_pickle(os.path.join('./clearsky/data', 'ornl_irrad_nsrdb.pkl.gzip'))
+    ground_df = pd.read_pickle(os.path.join('./clearsky_data', 'ornl_irrad_ground.pkl.gzip'))
+    nsrdb_df = pd.read_pickle(os.path.join('./clearsky_data', 'ornl_irrad_nsrdb.pkl.gzip'))
 
     ground_master = cs_detection.ClearskyDetection(ground_df, 'GHI', 'Clearsky GHI pvlib')
     nsrdb_master = cs_detection.ClearskyDetection(nsrdb_df, 'GHI', 'Clearsky GHI pvlib', 'sky_status')
