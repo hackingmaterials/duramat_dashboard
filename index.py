@@ -10,7 +10,8 @@ import dash_table_experiments as dt
 from app import app, client
 from misc.misc_pages import serve_header, serve_error
 
-# from clearsky import cs_dashboard
+from clearsky import cs_dashboard
+from clearsky import callbacks as cs_callbacks
 
 from degradation import deg_dashboard
 from degradation import callbacks as deg_callbacks
@@ -20,9 +21,6 @@ from degradation.utils import DBHandler
 encoded_logo = base64.b64encode(open('./images/duramat_logo.png', 'rb').read())
 encoded_degradation = base64.b64encode(open('./images/icon-data-management.png', 'rb').read())
 encoded_clearsky = base64.b64encode(open('./images/icon-module-testing.png', 'rb').read())
-
-
-
 
 
 layout = html.Div([
@@ -97,19 +95,15 @@ def display_page(pathname):
     if pathname == '/degradation':
         return deg_dashboard.serve_layout(deg_db_handler)
     elif pathname == '/clearsky':
-        # return deg_dashboard.serve_layout(deg_db_handler)
-        # return deg_dashboard.app_layout
-        # cs_dashboard.SCORES = []
-        # return cs_dashboard.app_layout
-        return serve_error()
-        # pass
-    # elif pathname == ''
+        return cs_dashboard.serve_layout()
     else:
         return layout
 
 
 deg_db_handler = DBHandler(client.pvproduction.time_series)
 deg_callbacks.add_callbacks(app, deg_db_handler)
+
+cs_callbacks.add_callbacks(app)
 
 
 if __name__ == '__main__':
