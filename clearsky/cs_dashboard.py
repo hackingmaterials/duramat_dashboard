@@ -10,7 +10,8 @@ import dash_html_components as html
 from misc.misc_pages import serve_header
 
 
-files = [f for f in os.listdir('./clearsky/data') if f.endswith('pkl.gzip')]
+files = [f for f in os.listdir('clearsky/data') if f.endswith('pkl.gzip')]
+# files = [f for f in os.listdir('./clearsky/data') if f.endswith('pkl.gzip')]
 print(files)
 
 
