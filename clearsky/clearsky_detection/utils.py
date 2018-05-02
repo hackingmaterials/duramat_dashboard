@@ -865,6 +865,13 @@ def detect_clearsky(measured, clearsky, times, window_length,
         components['line_length'] = line_diff
         components['slope_nstd'] = meas_slope_nstd
         components['slope_max'] = meas_slope_max - alpha*clear_slope_max
+
+        components['mean_diff_pass'] = c1
+        components['max_diff_pass'] = c2
+        components['line_length_pass'] = c3
+        components['slope_nstd_pass'] = c4
+        components['slope_max_pass'] = c5
+        components['non_zero'] = c6
         return clear_samples, components, alpha
     else:
         return clear_samples

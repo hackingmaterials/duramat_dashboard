@@ -3,6 +3,7 @@
 import pvlib
 
 import plotly.graph_objs as go
+import plotly.tools as tls
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
@@ -41,6 +42,7 @@ def add_callbacks(app):
         lower_ll = float(lower_ll)
         vardiff = float(vardiff)
         slopedev = float(slopedev)
+
         # ground_master, mask = utils.read_df(site, start_date, end_date, freq)
         # df = ground_master.df
         # is_clear = \
@@ -105,29 +107,62 @@ def add_callbacks(app):
 
         ground_master.calc_all_metrics(int(window))
 
+        fig = tls.make_subplots(rows=2, cols=1, shared_xaxes=True)
+
         plots = []
         plots.append(go.Scatter(x=df.index, y=df['GHI'], name='GHI'))
         # plots.append(go.Scatter(x=df.index, y=df['GHI nsrdb'].interpolate(), name='GHI(NSRDB)'))
         plots.append(go.Scatter(x=df.index, y=df['Clearsky GHI pvlib'], name='GHI(CS)'))
         plots.append(go.Scatter(x=df[is_clear].index, y=df[is_clear]['GHI'], name='PVLib clear', mode='markers'))
-        plots.append(go.Scatter(x=df[mask & df['sky_status'].astype(bool)].index,
-                                y=df[mask & df['sky_status'].astype(bool)]['GHI'],
-                                name='NSRDB clear', mode='markers',
-                                marker={'symbol': 'circle-open', 'line': {'width': 3}, 'size': 10}))
+        # plots.append(go.Scatter(x=df[mask & df['sky_status'].astype(bool)].index,
+        #                         y=df[mask & df['sky_status'].astype(bool)]['GHI'],
+        #                         name='NSRDB clear', mode='markers',
+        #                         marker={'symbol': 'circle-open', 'line': {'width': 3}, 'size': 10}))
         plots.append(go.Scatter(x=df.index, y=components['mean_diff'],
-                                name='Mean difference', visible='legendonly'))
+                                name='Mean diff.', visible='legendonly'))
         plots.append(go.Scatter(x=df.index, y=components['max_diff'],
-                                name='Max difference', visible='legendonly'))
+                                name='Max diff.', visible='legendonly'))
         plots.append(go.Scatter(x=df.index, y=components['line_length'],
                                 name='Line length', visible='legendonly'))
         plots.append(go.Scatter(x=df.index, y=components['slope_nstd'],
-                                name='Standard deviation of slopes', visible='legendonly'))
+                                name='Slope std. dev.', visible='legendonly'))
         plots.append(go.Scatter(x=df.index, y=components['slope_max'],
-                                name='Max deviation of slopes', visible='legendonly'))
-        layout = go.Layout(xaxis={'title': 'Date'}, yaxis={'title': 'W/m2'},
+                                name='Max slope diff.', visible='legendonly'))
+
+        for p in plots:
+            fig.append_trace(p, 1, 1)
+
+        plots2 = []
+        passes = pd.DataFrame(components)
+        for i, test in enumerate(['mean_diff_pass', 'max_diff_pass', 'line_length_pass',
+                                  'slope_nstd_pass', 'slope_max_pass']):
+            slice = passes[test].astype(int)
+            ii = i / 4
+            yval = [ii] * len(slice.astype(bool) & passes['non_zero'].astype(bool))
+            plots2.append(
+                go.Scatter(x=df.index[:len(slice)][slice.astype(bool) & passes['non_zero'].astype(bool)],
+                           y=yval, name='', mode='markers', showlegend=False)
+            )
+
+        for p in plots2:
+            fig.append_trace(p, 2, 1)
+
+        fig['layout']['yaxis2'].update(tickmode='text', tickvals=[0, .25, .5, .75, 1],
+                                       ticktext=['Mean diff.', 'Max diff.', 'Line length',
+                                                 'Slope std. dev.', 'Max slope diff.'])
+        fig['layout']['xaxis2'].update(title='Date')
+        fig['layout']['yaxis2'].update(domain=[0, 0.2])
+        fig['layout']['yaxis1'].update(title='GHI / W/m2')
+        fig['layout']['yaxis1'].update(domain=[.25, 1])
+        fig['layout'].update(height=500, margin={'l': 100})
+
+        plots = fig
+
+        layout = go.Layout(xaxis={'title': 'Date'}, # yaxis={'title': 'W/m2'},
                            title='Window length: {}, mean diff: {}, max diff: {}, upper line length: {}, '
                                  'lower line length: {}, max slope difference: {}, std slope differece: {}'
-                                  .format(window_length, mean_diff, max_diff, upper_ll, lower_ll, slopedev, vardiff))
+                                  .format(window_length, mean_diff, max_diff, upper_ll, lower_ll, slopedev, vardiff),
+                           )
         ts_plot = dcc.Graph(id='cs-plot', figure={'data': plots, 'layout': layout})
 
         # scores = [go.Scatter(x=list(range(len(params))),
@@ -153,14 +188,15 @@ def add_callbacks(app):
         # )
 
         final = html.Div([
-            html.Div(ts_plot),
+            html.Div(ts_plot)
+            # html.Div(dcc.Graph(id='cs-racetrack', figure={'data': plots2}))
              # html.H3('Previous runs'),
              # html.Div([
              #     html.Div(scores_plot, className='four columns'),
              #     html.Div(table, className='eight columns',
              #              style={'margin': {'r': 20, 't': 40, 'b': 20, 'l': 20, 'pad': 0}})
              # ], className='row')
-        ])
+        ], style={'width': '98%', 'float': 'center', 'pad': {'l': 40}})
 
         return final
 

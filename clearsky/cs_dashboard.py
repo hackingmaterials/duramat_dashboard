@@ -20,9 +20,13 @@ description = 'Recent research has shown that filtering periods of cloudy skies 
               'calculations can significantly impact the results.  In this dashboard, you are encouraged to explore ' \
               'detecting clear sky periods using the PVLib method (https://bit.ly/2E5sArY).  Modify the PVLib ' \
               'parameters to see the effects they have on the data set provided.  You may also upload your own data ' \
-              'set to optimize parameters for your own anaylsis.  All previous runs are plotted below.'
+              'set to optimize parameters for your own anaylsis.'
 
-description2 = 'Please be patient if you are working with large data sets (especially if it is high frequency).  ' \
+description2 = 'The plots below will show PVLib clear sky determinations along the time-series data provided.  You may ' \
+               'also investigate the values for each calculated parameter by selecting them on the legend.  Below the ' \
+               'time-series plot is a \'race track\' visualization of which tests each point passed.'
+
+description3 = 'Please be patient if you are working with large data sets (especially if it is high frequency).  ' \
                'You may have a better experience using smaller data sets.'
 
 
@@ -33,6 +37,7 @@ def serve_layout():
         html.H1('Clear Sky Detection'),
         html.P(description),
         html.P(description2),
+        html.P(description3),
         html.Div([
             html.Div([
                 html.H5('Select data set: '),
