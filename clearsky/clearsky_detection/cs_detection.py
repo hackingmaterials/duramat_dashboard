@@ -50,13 +50,14 @@ class ClearskyDetection(object):
         self.window = self.calc_window()
 
         self.masks_ = []
-        self.features_ = ['avg(GHI)-avg(GHIcs)',
-                          'max(GHI)-max(GHIcs)',
-                          'GHILL-GHIcsLL',
-                          'std(GHI)-std(GHIcs) normed',
-                          'max(abs(diff(GHI)-diff(GHIcs)))',
-                          'GHI>0']
+        # self.features_ = ['avg(GHI)-avg(GHIcs)',
+        #                   'max(GHI)-max(GHIcs)',
+        #                   'GHILL-GHIcsLL',
+        #                   'std(GHI)-std(GHIcs) normed',
+        #                   'max(abs(diff(GHI)-diff(GHIcs)))',
+        #                   'GHI>0']
                           # 't-tnoon']
+        self.features_ = ['mean_diff', 'max_diff', 'line_length', 'slope_nstd', 'slope_max', 'GHI>0']
 
     @classmethod
     def read_nsrdb_dir(cls, dir_path, timezone, keepers=('GHI', 'Clearsky GHI', 'Cloud Type'), file_ext='csv'):
@@ -511,11 +512,17 @@ class ClearskyDetection(object):
             raise RuntimeError('Label already exists.  Set overwrite to True or pick new label name.')
         self.df[label] = (self.df['Cloud Type'] == 0) & (self.df['GHI'] > 0)
 
-    def calc_all_metrics(self):
+    def calc_all_metrics(self, window_in_minutes):
         """Wrapper function for utils.calc_all_window_metrics for investigating features.
         """
-        utils.calc_all_window_metrics(self.df, self.window, self.meas_col, self.model_col, overwrite=True)
-        self.time_from_solar_noon()
+        # utils.calc_all_window_metrics(self.df, self.window, self.meas_col, self.model_col, overwrite=True)
+        components = utils.pvlib_features(self.df['GHI'], self.df['Clearsky GHI pvlib'], self.df.index, window_in_minutes)
+        # for key in components:
+        #     self.df[key] = pd.(components[key], index=self.df.index)
+        tmpdf = pd.DataFrame(components, index=self.df.index[:len(components['mean_diff'])])
+        self.df = pd.concat([self.df, tmpdf], axis=1).fillna(0)
+        self.df['GHI>0'] = self.df[self.meas_col] > 10
+        # self.time_from_solar_noon()
         # for feat in [i for i in self.features_ if i not in ('t-tnoon', 'std(GHI)-std(GHIcs) normed')]:
         #     self.df[feat] = (self.df[feat] / self.df['GHI mean']).replace([np.nan, np.inf, -np.inf], 0)
 
@@ -800,7 +807,7 @@ class ClearskyDetection(object):
         # times = np.asarray(time_steps) * dt
         self.df[label] = ts
 
-    def get_features_and_targets(self, nsrdb_obj, tsplit=None, ignore_nsrdb_mismatch=False):
+    def get_features_and_targets(self, nsrdb_obj=None, window_in_minutes=None, tsplit=None, ignore_nsrdb_mismatch=False):
         # filter and preprocess data
         #   fill values < 0 to 0
         #   add in target column
@@ -829,7 +836,7 @@ class ClearskyDetection(object):
             self.df['before'] = True
 
         # calculate window based ML metrics
-        self.calc_all_metrics()
+        self.calc_all_metrics(window_in_minutes)
 
         # return feature matrix and target vector as dataframes
         return self.df[self.features_], self.df[self.target_col], self.df[self.masks_].all(axis=1), self.df['before']

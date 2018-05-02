@@ -8,7 +8,7 @@ import numpy as np
 from clearsky.clearsky_detection import cs_detection
 
 
-def read_df(file):
+def read_df(file, start_date, end_date, freq):
     ground_df = pd.read_pickle(os.path.join('./clearsky_data', 'ornl_irrad_ground.pkl.gzip'))
     nsrdb_df = pd.read_pickle(os.path.join('./clearsky_data', 'ornl_irrad_nsrdb.pkl.gzip'))
 
@@ -21,10 +21,12 @@ def read_df(file):
     ground_master.df = ground_master.df.reindex(
         pd.date_range(ground_master.df.index[0], ground_master.df.index[-1], freq='T').fillna(0)
     )
-    ground_master.trim_dates('06-01-2008', '07-01-2008')
-    nsrdb_master.trim_dates('06-01-2008', '07-01-2008')
+    # ground_master.trim_dates('06-01-2008', '07-01-2008')
+    # nsrdb_master.trim_dates('06-01-2008', '07-01-2008')
+    ground_master.trim_dates(start_date, end_date)
+    nsrdb_master.trim_dates(start_date, end_date)
 
-    ground_master.downsample(10)
+    ground_master.downsample(freq)
 
     mask, _ = ground_master.get_mask_tsplit(nsrdb_master, ignore_nsrdb_mismatch=False)
     return ground_master, mask

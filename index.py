@@ -29,12 +29,11 @@ layout = html.Div([
     html.H1('DuraMAT Data Analytics'),
     html.Div([
         html.P('The Durable Module Materials Consortium (DuraMAT) combines government, academic, and industry '
-                'expertise in order to discover, de-risk, and enable commercialization of new material designs '
-                'for photovoltaic (PV) modules.  This project works in concert with other Department of Energy (DOE) '
-                'projects to help realize a levelized cost of electricity less than 3 cents per kilowatt-hour.'),
+               'expertise in order to discover, de-risk, and enable commercialization of new material designs '
+               'for photovoltaic (PV) modules.  This project works in concert with other Department of Energy (DOE) '
+               'projects to help realize a levelized cost of electricity less than 3 cents per kilowatt-hour.'),
         html.P('A large part of the DuraMAT effort is developing data analytics, visualization, and machine learning '
-               'tools to accelerate research.  This website will showcase current and completed data-driven projects '
-               'through interactive visualaztion and analytics pipelines.'),
+               'tools to accelerate research.  This website will showcase current and completed data-driven projects.'),
         html.P('For more information on DuraMAT, follow the link in the navigation bar at the top of the page.  '
                'If you are interested in sharing your data with DuraMAT, with the potenial of developing interactive '
                'dashboards, please start by visiting the DuraMAT DataHub link above.'),
