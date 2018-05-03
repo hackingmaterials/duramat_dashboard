@@ -1,6 +1,8 @@
 
 
 import pvlib
+import base64
+import io
 
 import plotly.graph_objs as go
 import plotly.tools as tls
@@ -15,12 +17,12 @@ from clearsky.clearsky_detection import utils as cs_utils
 from sklearn import metrics
 import pandas as pd
 
-# all_params = []
 
 def add_callbacks(app):
     @app.callback(
         Output('cs-hidden', 'children'),
-        [Input('cs-site', 'value'),
+        [Input('cs-file_upload', 'contents'),
+         Input('cs-file_upload', 'filename'),
          Input('cs-date_picker_start', 'value'),
          Input('cs-date_picker_end', 'value'),
          Input('cs-freq', 'value'),
@@ -33,7 +35,7 @@ def add_callbacks(app):
          Input('cs-slopedev_slider', 'value')],
         [State('cs-hidden', 'children')]
     )
-    def update_table(site, start_date, end_date, freq, window_length, mean_diff, max_diff,
+    def update_table(contents, filename, start_date, end_date, freq, window_length, mean_diff, max_diff,
                      upper_ll, lower_ll, vardiff, slopedev, prev_params):
         window_length = int(window_length)
         mean_diff = float(mean_diff)
@@ -43,15 +45,6 @@ def add_callbacks(app):
         vardiff = float(vardiff)
         slopedev = float(slopedev)
 
-        # ground_master, mask = utils.read_df(site, start_date, end_date, freq)
-        # df = ground_master.df
-        # is_clear = \
-        #     pvlib.clearsky.detect_clearsky(df['GHI'], df['Clearsky GHI pvlib'], df.index,
-        #                                    window_length=window_length, mean_diff=mean_diff,
-        #                                    max_diff=max_diff, upper_line_length=upper_ll, lower_line_length=lower_ll,
-        #                                    slope_dev=slopedev, var_diff=vardiff)
-        # score = metrics.fbeta_score(ground_master.df[mask]['sky_status'], is_clear[mask], beta=.5)
-
         new_params = {'Window length': window_length,
                       'Mean difference': mean_diff,
                       'Max difference': max_diff,
@@ -59,14 +52,12 @@ def add_callbacks(app):
                       'Lower line length': lower_ll,
                       'Variance of slopes': vardiff,
                       'Max difference of slopes': slopedev,}
-                      # 'F-score': score}
-        # get old runs (if they exist)
+
         try:
             prev_runs = pd.read_json(prev_params)
         except:
             prev_runs = pd.DataFrame()
 
-        # add new runs to previous
         new_params['Run'] = len(prev_runs) + 1
         prev_runs = pd.concat([prev_runs, pd.DataFrame([new_params])], ignore_index=True)
 
@@ -74,13 +65,15 @@ def add_callbacks(app):
 
     @app.callback(
         Output('cs-output', 'children'),
-        [Input('cs-date_picker_start', 'value'),
+        [Input('cs-file_upload', 'contents'),
+         Input('cs-file_upload', 'filename'),
+         Input('cs-date_picker_start', 'value'),
          Input('cs-date_picker_end', 'value'),
          Input('cs-freq', 'value'),
          Input('cs-window_length_slider', 'value'),
          Input('cs-hidden', 'children')]
     )
-    def update_plot(start_date, end_date, freq, window, params):
+    def update_plot(contents, filename, start_date, end_date, freq, window, params):
         params = pd.read_json(params)
         params = params.apply(pd.to_numeric)
         params = params.sort_values('Run')
@@ -93,31 +86,19 @@ def add_callbacks(app):
         slopedev = params['Max difference of slopes'].values[-1]
         vardiff = params['Variance of slopes'].values[-1]
 
-        ground_master, mask = utils.read_df(None, start_date, end_date, freq)
-        df = ground_master.df
+        df = utils.read_df(contents, filename, start_date, end_date, freq)
         is_clear, components, _ = \
-            cs_utils.detect_clearsky(df['GHI'], df['Clearsky GHI pvlib'], df.index,
+            cs_utils.detect_clearsky(df['GHI'], df['GHIcs'], df.index,
                                      window_length=window_length, mean_diff=mean_diff,
                                      max_diff=max_diff, upper_line_length=upper_ll, lower_line_length=lower_ll,
                                      slope_dev=slopedev, var_diff=vardiff, return_components=True)
-            # pvlib.clearsky.detect_clearsky(df['GHI'], df['Clearsky GHI pvlib'], df.index,
-            #                                window_length=window_length, mean_diff=mean_diff,
-            #                                max_diff=max_diff, upper_line_length=upper_ll, lower_line_length=lower_ll,
-            #                                slope_dev=slopedev, var_diff=vardiff)
-
-        ground_master.calc_all_metrics(int(window))
 
         fig = tls.make_subplots(rows=2, cols=1, shared_xaxes=True)
 
         plots = []
         plots.append(go.Scatter(x=df.index, y=df['GHI'], name='GHI'))
-        # plots.append(go.Scatter(x=df.index, y=df['GHI nsrdb'].interpolate(), name='GHI(NSRDB)'))
-        plots.append(go.Scatter(x=df.index, y=df['Clearsky GHI pvlib'], name='GHI(CS)'))
+        plots.append(go.Scatter(x=df.index, y=df['GHIcs'], name='GHIcs'))
         plots.append(go.Scatter(x=df[is_clear].index, y=df[is_clear]['GHI'], name='PVLib clear', mode='markers'))
-        # plots.append(go.Scatter(x=df[mask & df['sky_status'].astype(bool)].index,
-        #                         y=df[mask & df['sky_status'].astype(bool)]['GHI'],
-        #                         name='NSRDB clear', mode='markers',
-        #                         marker={'symbol': 'circle-open', 'line': {'width': 3}, 'size': 10}))
         plots.append(go.Scatter(x=df.index, y=components['mean_diff'],
                                 name='Mean diff.', visible='legendonly'))
         plots.append(go.Scatter(x=df.index, y=components['max_diff'],
@@ -155,6 +136,9 @@ def add_callbacks(app):
         fig['layout']['yaxis1'].update(title='GHI / W/m2')
         fig['layout']['yaxis1'].update(domain=[.25, 1])
         fig['layout'].update(height=500, margin={'l': 100})
+        fig['layout'].update(title='Window length: {}, mean diff: {}, max diff: {}, upper line length: {}, '
+                                    'lower line length: {}, max slope difference: {}, std slope differece: {}'
+                                    .format(window_length, mean_diff, max_diff, upper_ll, lower_ll, slopedev, vardiff))
 
         plots = fig
 
@@ -189,13 +173,6 @@ def add_callbacks(app):
 
         final = html.Div([
             html.Div(ts_plot)
-            # html.Div(dcc.Graph(id='cs-racetrack', figure={'data': plots2}))
-             # html.H3('Previous runs'),
-             # html.Div([
-             #     html.Div(scores_plot, className='four columns'),
-             #     html.Div(table, className='eight columns',
-             #              style={'margin': {'r': 20, 't': 40, 'b': 20, 'l': 20, 'pad': 0}})
-             # ], className='row')
         ], style={'width': '98%', 'float': 'center', 'pad': {'l': 40}})
 
         return final
@@ -256,4 +233,60 @@ def add_callbacks(app):
     #     final = [html.Div(ts_plot),
     #              html.Div(scores_plot)]
 
-        return final
+    #     return final
+
+    @app.callback(
+        Output('cs-freq', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_freq(click):
+        return 30
+
+    @app.callback(
+        Output('cs-window_length_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_window_length(click):
+        return 90
+
+    @app.callback(
+        Output('cs-mean_diff_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_mean_diff(click):
+        return 75
+
+    @app.callback(
+        Output('cs-max_diff_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_max_diff(click):
+        return 75
+
+    @app.callback(
+        Output('cs-upper_ll_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_upper_ll(click):
+        return 10
+
+    @app.callback(
+        Output('cs-lower_ll_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_lower_ll(click):
+        return -5
+
+    @app.callback(
+        Output('cs-vardiff_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_vardiff(click):
+        return 0.005
+
+    @app.callback(
+        Output('cs-slopedev_slider', 'value'),
+        [Input('cs-reset', 'n_clicks')]
+    )
+    def reset_slopedev(click):
+        return 8

@@ -10,24 +10,23 @@ import dash_html_components as html
 from misc.misc_pages import serve_header
 
 
-# files = [f for f in os.listdir('./clearsky/data') if f.endswith('pkl.gzip')]
-# files = [f for f in os.listdir('./clearsky/data') if f.endswith('pkl.gzip')]
-files = [None]
-print(files)
-
-
 description = 'Recent research has shown that filtering periods of cloudy skies out of PV degradation rate ' \
               'calculations can significantly impact the results.  In this dashboard, you are encouraged to explore ' \
               'detecting clear sky periods using the PVLib method (https://bit.ly/2E5sArY).  Modify the PVLib ' \
               'parameters to see the effects they have on the data set provided.  You may also upload your own data ' \
               'set to optimize parameters for your own anaylsis.'
 
-description2 = 'The plots below will show PVLib clear sky determinations along the time-series data provided.  You may ' \
-               'also investigate the values for each calculated parameter by selecting them on the legend.  Below the ' \
-               'time-series plot is a \'race track\' visualization of which tests each point passed.'
+description2 = 'The plots below will show PVLib clear sky determinations along the time-series data provided.  ' \
+               'You may also investigate the values for each parameter along the data by selecting them on ' \
+               'the legend.  Below the time-series plot is a \'race track\' visualization that shows which ' \
+               'features are within the supplied thresholds.'
 
 description3 = 'Please be patient if you are working with large data sets (especially if it is high frequency).  ' \
-               'You may have a better experience using smaller data sets.'
+               'You may have a better experience using smaller data sets.  '
+
+description4 = '*If you are uploading your own data set* ' \
+               'it must meet these two requirements: 1) The file must be .csv formatted 2) Have columns ' \
+               '\'datetime\', \'GHI\', and \'GHIcs\'.'
 
 
 def serve_layout():
@@ -38,13 +37,15 @@ def serve_layout():
         html.P(description),
         html.P(description2),
         html.P(description3),
+        html.P(description4),
         html.Div([
             html.Div([
                 html.H5('Select data set: '),
-                dcc.Dropdown(
-                    id='cs-site',
-                    options=[{'label': i, 'value': i} for i in files],
-                    value=files[0]
+                dcc.Upload(
+                    html.Button('Upload File'),
+                    id='cs-file_upload',
+                    contents=None,
+                    filename=None,
                 )
             ], className='three columns'),
             html.Div([
@@ -68,6 +69,13 @@ def serve_layout():
                     ], className='six columns'),
                 ], className='row'),
             ], className='three columns'),
+            html.Div([
+                html.Br(),
+            ], className='three columns'),
+            html.Div([
+                html.H5('Start over from scracth:'),
+                html.Button('Reset parameters', id='cs-reset')
+            ], className='three columns')
         ], className='row', style={'fontSize': '14'}),
         html.Div([
             html.Div([
