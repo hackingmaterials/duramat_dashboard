@@ -10,24 +10,6 @@ import dash_html_components as html
 from misc.misc_pages import serve_header
 
 
-description = 'Recent research has shown that filtering periods of cloudy skies out of PV degradation rate ' \
-              'calculations can significantly impact the results.  In this dashboard, you are encouraged to explore ' \
-              'detecting clear sky periods using the PVLib method (https://bit.ly/2E5sArY).  Modify the PVLib ' \
-              'parameters to see the effects they have on the data set provided.  You may also upload your own data ' \
-              'set to optimize parameters for your own anaylsis.'
-
-description2 = 'The plots below will show PVLib clear sky determinations along the time-series data provided.  ' \
-               'You may also investigate the values for each parameter along the data by selecting them on ' \
-               'the legend.  Below the time-series plot is a \'race track\' visualization that shows which ' \
-               'features are within the supplied thresholds.'
-
-description3 = 'Please be patient if you are working with large data sets (especially if it is high frequency).  ' \
-               'You may have a better experience using smaller data sets.  '
-
-description4 = '*If you are uploading your own data set* ' \
-               'it must meet these two requirements: 1) The file must be .csv formatted 2) Have columns ' \
-               '\'datetime\', \'GHI\', and \'GHIcs\'.'
-
 description = dcc.Markdown("""
 Recent research has shown that filtering periods of cloudy skies out of PV degradation rate 
 calculations can significantly impact the results.  In this dashboard, you are encouraged to explore 
@@ -56,9 +38,6 @@ def serve_layout():
         html.Div([
             html.P(description),
         ], style={'margin-left': '20px', 'margin-right': '20px'}),
-        # html.P(description2),
-        # html.P(description3),
-        # html.P(description4),
         html.Div([
             html.Div([
                 html.H5('Select data set: '),
