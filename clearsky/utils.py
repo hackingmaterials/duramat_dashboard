@@ -34,8 +34,7 @@ from clearsky.clearsky_detection import cs_detection
 #     return ground_master, mask
 
 # def read_df(file, start_date, end_date, freq):
-def read_df(contents, filename, start_date, end_date, freq):
-    print(filename)
+def read_df(contents, filename):
     if contents is not None:
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
@@ -45,8 +44,9 @@ def read_df(contents, filename, start_date, end_date, freq):
 
     # df = pd.read_csv('./clearsky_data/example_clearsky.csv')
     df.index = pd.to_datetime(df['datetime'])
-    df = df[(df.index >= start_date) & (df.index <= end_date)]
-    df = df[df.index.minute % freq == 0]
+    # df = df[~df.index.duplicated(keep='first')]
+    # df = df.reset_index(pd.date_range(start=pd.to_datetime(df.index[0]),
+    #                                   end=pd.to_datetime(df.index[-1]), freq='{}min'.format(freq)))
 
     return df
 

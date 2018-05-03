@@ -28,16 +28,37 @@ description4 = '*If you are uploading your own data set* ' \
                'it must meet these two requirements: 1) The file must be .csv formatted 2) Have columns ' \
                '\'datetime\', \'GHI\', and \'GHIcs\'.'
 
+description = dcc.Markdown("""
+Recent research has shown that filtering periods of cloudy skies out of PV degradation rate 
+calculations can significantly impact the results.  In this dashboard, you are encouraged to explore 
+detecting clear sky periods using the [PVLib method](https://bit.ly/2E5sArY).  Modify the PVLib 
+parameters to see the effects they have on the data set provided.  You may also upload your own data 
+set to optimize parameters for your own anaylsis.
+
+The plots below will show PVLib clear sky determinations along the time-series data provided.
+You may also investigate the values for each parameter along the data by selecting them on
+the legend.  Below the time-series plot is a 'race track' visualization that shows which
+features are within the supplied thresholds.
+
+Please be patient if you are working with large and/or high frequency data sets. 
+You may have a better experience using smaller data sets.
+
+**If you are uploading your own data** it must be .csv formatted, contain columns named 'datetime', 'GHI', and 'GHIcs',
+and have evenly spaced times (mixed frequencies are not currently supported).
+""")
+
 
 def serve_layout():
     app_layout = \
     html.Div([
         serve_header(),
         html.H1('Clear Sky Detection'),
-        html.P(description),
-        html.P(description2),
-        html.P(description3),
-        html.P(description4),
+        html.Div([
+            html.P(description),
+        ], style={'margin-left': '20px', 'margin-right': '20px'}),
+        # html.P(description2),
+        # html.P(description3),
+        # html.P(description4),
         html.Div([
             html.Div([
                 html.H5('Select data set: '),
@@ -73,8 +94,8 @@ def serve_layout():
                 html.Br(),
             ], className='three columns'),
             html.Div([
-                html.H5('Start over from scracth:'),
-                html.Button('Reset parameters', id='cs-reset')
+                html.H5('Run analysis'),
+                html.Button('Detect clear skies', id='cs-run')
             ], className='three columns')
         ], className='row', style={'fontSize': '14'}),
         html.Div([
@@ -95,6 +116,7 @@ def serve_layout():
                     step=1,
                     value=90,
                     type='Number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ], className='three columns'),
@@ -107,6 +129,7 @@ def serve_layout():
                     step=1,
                     value=75,
                     type='number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ] , className='three columns'),
@@ -119,6 +142,7 @@ def serve_layout():
                     step=1,
                     value=75,
                     type='number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ], className='three columns'),
@@ -133,6 +157,7 @@ def serve_layout():
                     step=1,
                     value=10,
                     type='number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ], className='three columns'),
@@ -142,9 +167,10 @@ def serve_layout():
                     id='cs-lower_ll_slider',
                     min=-500,
                     max=0,
-                    step=1,
+                    step=-1,
                     value=-5,
                     type='number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ], className='three columns'),
@@ -157,6 +183,7 @@ def serve_layout():
                     step=.005,
                     value=.005,
                     type='number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ], className='three columns'),
@@ -169,6 +196,7 @@ def serve_layout():
                     step=1,
                     value=8,
                     type='number',
+                    inputmode='numeric',
                     style={'height': '35px', 'fontFamily': 'HelveticaNeue', 'width': '100%'},
                 )
             ], className='three columns'),

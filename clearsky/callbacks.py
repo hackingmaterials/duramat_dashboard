@@ -3,6 +3,7 @@
 import pvlib
 import base64
 import io
+import datetime
 
 import plotly.graph_objs as go
 import plotly.tools as tls
@@ -65,15 +66,16 @@ def add_callbacks(app):
 
     @app.callback(
         Output('cs-output', 'children'),
-        [Input('cs-file_upload', 'contents'),
-         Input('cs-file_upload', 'filename'),
-         Input('cs-date_picker_start', 'value'),
-         Input('cs-date_picker_end', 'value'),
-         Input('cs-freq', 'value'),
-         Input('cs-window_length_slider', 'value'),
-         Input('cs-hidden', 'children')]
+        [Input('cs-run', 'n_clicks')],
+        [State('cs-file_upload', 'contents'),
+         State('cs-file_upload', 'filename'),
+         State('cs-date_picker_start', 'value'),
+         State('cs-date_picker_end', 'value'),
+         State('cs-freq', 'value'),
+         State('cs-window_length_slider', 'value'),
+         State('cs-hidden', 'children')]
     )
-    def update_plot(contents, filename, start_date, end_date, freq, window, params):
+    def update_plot(click, contents, filename, start_date, end_date, freq, window, params):
         params = pd.read_json(params)
         params = params.apply(pd.to_numeric)
         params = params.sort_values('Run')
@@ -86,7 +88,9 @@ def add_callbacks(app):
         slopedev = params['Max difference of slopes'].values[-1]
         vardiff = params['Variance of slopes'].values[-1]
 
-        df = utils.read_df(contents, filename, start_date, end_date, freq)
+        df = utils.read_df(contents, filename)
+        df = df[(df.index >= start_date) & (df.index <= end_date)]
+        df = df[df.index.minute % freq == 0]
         is_clear, components, _ = \
             cs_utils.detect_clearsky(df['GHI'], df['GHIcs'], df.index,
                                      window_length=window_length, mean_diff=mean_diff,
@@ -137,8 +141,8 @@ def add_callbacks(app):
         fig['layout']['yaxis1'].update(domain=[.25, 1])
         fig['layout'].update(height=500, margin={'l': 100})
         fig['layout'].update(title='Window length: {}, mean diff: {}, max diff: {}, upper line length: {}, '
-                                    'lower line length: {}, max slope difference: {}, std slope differece: {}'
-                                    .format(window_length, mean_diff, max_diff, upper_ll, lower_ll, slopedev, vardiff))
+                                   'lower line length: {}, max slope difference: {}, std slope differece: {}'
+                                   .format(window_length, mean_diff, max_diff, upper_ll, lower_ll, slopedev, vardiff))
 
         plots = fig
 
@@ -235,58 +239,76 @@ def add_callbacks(app):
 
     #     return final
 
-    @app.callback(
-        Output('cs-freq', 'value'),
-        [Input('cs-reset', 'n_clicks')]
-    )
-    def reset_freq(click):
-        return 30
+    # @app.callback(
+    #     Output('cs-freq', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_freq(click):
+    #     return 30
+    #
+    # @app.callback(
+    #     Output('cs-window_length_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_window_length(click):
+    #     return 90
+    #
+    # @app.callback(
+    #     Output('cs-mean_diff_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_mean_diff(click):
+    #     return 75
+    #
+    # @app.callback(
+    #     Output('cs-max_diff_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_max_diff(click):
+    #     return 75
+    #
+    # @app.callback(
+    #     Output('cs-upper_ll_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_upper_ll(click):
+    #     return 10
+    #
+    # @app.callback(
+    #     Output('cs-lower_ll_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_lower_ll(click):
+    #     return -5
+    #
+    # @app.callback(
+    #     Output('cs-vardiff_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_vardiff(click):
+    #     return 0.005
+    #
+    # @app.callback(
+    #     Output('cs-slopedev_slider', 'value'),
+    #     [Input('cs-reset', 'n_clicks')]
+    # )
+    # def reset_slopedev(click):
+    #     return 8
 
     @app.callback(
-        Output('cs-window_length_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
+        Output('cs-date_picker_start', 'value'),
+        [Input('cs-file_upload', 'contents'),
+         Input('cs-file_upload', 'contents')]
     )
-    def reset_window_length(click):
-        return 90
+    def set_start_date(contents, filename):
+        df = utils.read_df(contents, filename)
+        return df.index[0].date()
 
     @app.callback(
-        Output('cs-mean_diff_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
+        Output('cs-date_picker_end', 'value'),
+        [Input('cs-file_upload', 'contents'),
+         Input('cs-file_upload', 'filename')]
     )
-    def reset_mean_diff(click):
-        return 75
-
-    @app.callback(
-        Output('cs-max_diff_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
-    )
-    def reset_max_diff(click):
-        return 75
-
-    @app.callback(
-        Output('cs-upper_ll_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
-    )
-    def reset_upper_ll(click):
-        return 10
-
-    @app.callback(
-        Output('cs-lower_ll_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
-    )
-    def reset_lower_ll(click):
-        return -5
-
-    @app.callback(
-        Output('cs-vardiff_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
-    )
-    def reset_vardiff(click):
-        return 0.005
-
-    @app.callback(
-        Output('cs-slopedev_slider', 'value'),
-        [Input('cs-reset', 'n_clicks')]
-    )
-    def reset_slopedev(click):
-        return 8
+    def set_end_date(contents, filename):
+        df = utils.read_df(contents, filename)
+        return (df.index[0] + datetime.timedelta(days=7)).date()
