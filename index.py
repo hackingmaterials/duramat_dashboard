@@ -29,14 +29,14 @@ layout = html.Div([
     html.H1('DuraMAT Data Analytics'),
     html.Div([
         html.P('The Durable Module Materials Consortium (DuraMAT) combines government, academic, and industry '
-               'expertise in order to discover, de-risk, and enable commercialization of new material designs '
+               'expertise to discover, de-risk, and enable commercialization of new material designs '
                'for photovoltaic (PV) modules.  This project works in concert with other Department of Energy (DOE) '
                'projects to help realize a levelized cost of electricity less than 3 cents per kilowatt-hour.'),
         html.P('A large part of the DuraMAT effort is developing data analytics, visualization, and machine learning '
                'tools to accelerate research.  This website will showcase current and completed data-driven projects.'),
         html.P('For more information on DuraMAT, follow the link in the navigation bar at the top of the page.  '
                'If you are interested in sharing your data with DuraMAT, with the potenial of developing interactive '
-               'dashboards, please start by visiting the DuraMAT DataHub link above.'),
+               'dashboards, please start by visiting the DataHub link above.'),
     ], style={'margin-left': '20px'}),
     html.H2('Dashboards'),
     html.Div([
@@ -53,9 +53,6 @@ layout = html.Div([
                            'degradation rate calculations such as ordinary least squares or year-on-year.',
                            style={'textAlign': 'justfiy', 'text-justify': 'inter-word'})],
                            style={'float': 'left', 'width': '700px'}),
-                # html.Div([
-                #     html.Img(src='data:image/png;base64,{}'.format(encoded_degradation.decode()), style={'width': '125px'}),
-                # ], style={'margin-left': '720px', 'vertical-align': 'top', 'float': 'left'})
             ], style={'display': 'inline-block'}),
         ], style={'float': 'left'}),
         html.Div([
@@ -66,14 +63,11 @@ layout = html.Div([
             html.Div([
                 html.Div([
                     html.P('Interactively explore PVLib\'s clear sky detection algorithm.  '
-                           'Set the parameters and score classifications against known sky conditions.  Use your '
-                           'optimal parameters downstream in your degradation rate calculations or visit the '
-                           'PV Degradation dashboard to see its effect.')],
+                           'Set the parameters and visualize their affect on the classification performance.  Find '
+                           'optimal PVLib thresholds for your downstream analytics or visit the '
+                           'PV Degradation dashboard to see how it affects degradation rates.')],
                     style={'textAlign': 'justfiy', 'textJustify': 'inter-word'})],
                 style={'float': 'left', 'width': '700px'}),
-                # html.Div([
-                #     html.Img(src='data:image/png;base64,{}'.format(encoded_clearsky.decode()), style={'width': '125px'}),
-                # ], style={'margin-left': '720px', 'vertical-align': 'top', 'float': 'left'})
             ], style={'float': 'left'}),
     ], style={'margin-left': '20px'})
 ])
@@ -106,5 +100,5 @@ cs_callbacks.add_callbacks(app)
 
 
 if __name__ == '__main__':
-    app.run_server(threaded=True)
-    # app.run_server(debug=True, threaded=True)
+    # app.run_server(threaded=True)
+    app.run_server(debug=True, threaded=True)

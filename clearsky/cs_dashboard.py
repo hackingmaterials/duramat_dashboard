@@ -13,20 +13,20 @@ from misc.misc_pages import serve_header
 description = dcc.Markdown("""
 Recent research has shown that filtering periods of cloudy skies out of PV degradation rate 
 calculations can significantly impact the results.  In this dashboard, you are encouraged to explore 
-detecting clear sky periods using the [PVLib method](https://bit.ly/2E5sArY).  Modify the PVLib 
-parameters to see the effects they have on the data set provided.  You may also upload your own data 
-set to optimize parameters for your own anaylsis.
+detecting clear sky periods using the algorithm from [PVLib](https://bit.ly/2E5sArY).  Modify the PVLib 
+parameters to see how they effect clear sky classifications.  You can also upload your own data 
+set and optimize parameters for your analysis.
 
 The plots below will show PVLib clear sky determinations along the time-series data provided.
-You may also investigate the values for each parameter along the data by selecting them on
+The values of each of the features used in the classifier can also be plotted by selecting them from
 the legend.  Below the time-series plot is a 'race track' visualization that shows which
 features are within the supplied thresholds.
 
-Please be patient if you are working with large and/or high frequency data sets. 
+Please be patient if you are working with large or high frequency data sets. 
 You may have a better experience using smaller data sets.
 
 **If you are uploading your own data** it must be .csv formatted, contain columns named 'datetime', 'GHI', and 'GHIcs',
-and have evenly spaced times (mixed frequencies are not currently supported).
+and have evenly spaced times (mixed frequency data isn't supported).
 """)
 
 

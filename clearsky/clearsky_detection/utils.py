@@ -800,6 +800,7 @@ def detect_clearsky(measured, clearsky, times, window_length,
     H = hankel(np.arange(samples_per_window),
                np.arange(samples_per_window-1, len(times)))
 
+
     # calculate measurement statistics
     meas_mean = np.mean(measured[H], axis=0)
     meas_max = np.max(measured[H], axis=0)
@@ -965,11 +966,18 @@ def pvlib_features(measured, clearsky, times, window_length):
 
     # be polite about returning the same type as was input
     components = OrderedDict()
-    components['mean_diff'] = np.abs(meas_mean - alpha*clear_mean)
-    components['max_diff'] = np.abs(meas_max - alpha*clear_max)
-    components['line_length'] = line_diff
-    components['slope_nstd'] = meas_slope_nstd
-    components['slope_max'] = meas_slope_max - alpha*clear_slope_max
+    pad = np.zeros((samples_per_window // 2))
+    components['mean_diff'] = np.append(np.insert(np.abs(meas_mean - alpha*clear_mean), 0, pad), pad)
+    components['max_diff'] = np.append(np.insert(np.abs(meas_max - alpha*clear_max), 0, pad), pad)
+    components['line_length'] = np.append(np.insert(line_diff, 0, pad), pad)
+    components['slope_nstd'] = np.append(np.insert(meas_slope_nstd, 0, pad), pad)
+    components['slope_max'] = np.append(np.insert(meas_slope_max - alpha*clear_slope_max, 0, pad), pad)
+    # components = OrderedDict()
+    # components['mean_diff'] = np.abs(meas_mean - alpha*clear_mean)
+    # components['max_diff'] = np.abs(meas_max - alpha*clear_max)
+    # components['line_length'] = line_diff
+    # components['slope_nstd'] = meas_slope_nstd
+    # components['slope_max'] = meas_slope_max - alpha*clear_slope_max
     return components
 
 

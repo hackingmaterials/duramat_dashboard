@@ -20,49 +20,49 @@ import pandas as pd
 
 
 def add_callbacks(app):
-    @app.callback(
-        Output('cs-hidden', 'children'),
-        [Input('cs-file_upload', 'contents'),
-         Input('cs-file_upload', 'filename'),
-         Input('cs-date_picker_start', 'value'),
-         Input('cs-date_picker_end', 'value'),
-         Input('cs-freq', 'value'),
-         Input('cs-window_length_slider', 'value'),
-         Input('cs-mean_diff_slider', 'value'),
-         Input('cs-max_diff_slider', 'value'),
-         Input('cs-upper_ll_slider', 'value'),
-         Input('cs-lower_ll_slider', 'value'),
-         Input('cs-vardiff_slider', 'value'),
-         Input('cs-slopedev_slider', 'value')],
-        [State('cs-hidden', 'children')]
-    )
-    def update_table(contents, filename, start_date, end_date, freq, window_length, mean_diff, max_diff,
-                     upper_ll, lower_ll, vardiff, slopedev, prev_params):
-        window_length = int(window_length)
-        mean_diff = float(mean_diff)
-        max_diff = float(max_diff)
-        upper_ll = float(upper_ll)
-        lower_ll = float(lower_ll)
-        vardiff = float(vardiff)
-        slopedev = float(slopedev)
-
-        new_params = {'Window length': window_length,
-                      'Mean difference': mean_diff,
-                      'Max difference': max_diff,
-                      'Upper line length': upper_ll,
-                      'Lower line length': lower_ll,
-                      'Variance of slopes': vardiff,
-                      'Max difference of slopes': slopedev,}
-
-        try:
-            prev_runs = pd.read_json(prev_params)
-        except:
-            prev_runs = pd.DataFrame()
-
-        new_params['Run'] = len(prev_runs) + 1
-        prev_runs = pd.concat([prev_runs, pd.DataFrame([new_params])], ignore_index=True)
-
-        return prev_runs.to_json()
+    # @app.callback(
+    #     Output('cs-hidden', 'children'),
+    #     [Input('cs-file_upload', 'contents'),
+    #      Input('cs-file_upload', 'filename'),
+    #      Input('cs-date_picker_start', 'value'),
+    #      Input('cs-date_picker_end', 'value'),
+    #      Input('cs-freq', 'value'),
+    #      Input('cs-window_length_slider', 'value'),
+    #      Input('cs-mean_diff_slider', 'value'),
+    #      Input('cs-max_diff_slider', 'value'),
+    #      Input('cs-upper_ll_slider', 'value'),
+    #      Input('cs-lower_ll_slider', 'value'),
+    #      Input('cs-vardiff_slider', 'value'),
+    #      Input('cs-slopedev_slider', 'value')],
+    #     [State('cs-hidden', 'children')]
+    # )
+    # def update_table(contents, filename, start_date, end_date, freq, window_length, mean_diff, max_diff,
+    #                  upper_ll, lower_ll, vardiff, slopedev, prev_params):
+    #     window_length = int(window_length)
+    #     mean_diff = float(mean_diff)
+    #     max_diff = float(max_diff)
+    #     upper_ll = float(upper_ll)
+    #     lower_ll = float(lower_ll)
+    #     vardiff = float(vardiff)
+    #     slopedev = float(slopedev)
+    #
+    #     new_params = {'Window length': window_length,
+    #                   'Mean difference': mean_diff,
+    #                   'Max difference': max_diff,
+    #                   'Upper line length': upper_ll,
+    #                   'Lower line length': lower_ll,
+    #                   'Variance of slopes': vardiff,
+    #                   'Max difference of slopes': slopedev,}
+    #
+    #     try:
+    #         prev_runs = pd.read_json(prev_params)
+    #     except:
+    #         prev_runs = pd.DataFrame()
+    #
+    #     new_params['Run'] = len(prev_runs) + 1
+    #     prev_runs = pd.concat([prev_runs, pd.DataFrame([new_params])], ignore_index=True)
+    #
+    #     return prev_runs.to_json()
 
     @app.callback(
         Output('cs-output', 'children'),
@@ -73,30 +73,41 @@ def add_callbacks(app):
          State('cs-date_picker_end', 'value'),
          State('cs-freq', 'value'),
          State('cs-window_length_slider', 'value'),
-         State('cs-hidden', 'children')]
+         State('cs-mean_diff_slider', 'value'),
+         State('cs-max_diff_slider', 'value'),
+         State('cs-upper_ll_slider', 'value'),
+         State('cs-lower_ll_slider', 'value'),
+         State('cs-vardiff_slider', 'value'),
+         State('cs-slopedev_slider', 'value')]
     )
-    def update_plot(click, contents, filename, start_date, end_date, freq, window, params):
-        params = pd.read_json(params)
-        params = params.apply(pd.to_numeric)
-        params = params.sort_values('Run')
+    def update_plot(click, contents, filename, start_date, end_date, freq, window_length, mean_diff,
+                    max_diff, upper_ll, lower_ll, vardiff, slopedev):
+        if click < 1:
+            return
 
-        window_length = params['Window length'].values[-1]
-        mean_diff = params['Mean difference'].values[-1]
-        max_diff = params['Max difference'].values[-1]
-        upper_ll = params['Upper line length'].values[-1]
-        lower_ll = params['Lower line length'].values[-1]
-        slopedev = params['Max difference of slopes'].values[-1]
-        vardiff = params['Variance of slopes'].values[-1]
+        # params = pd.read_json(params)
+        # params = params.apply(pd.to_numeric)
+        # params = params.sort_values('Run')
+
+        window_length = int(window_length)
+        mean_diff = float(mean_diff)
+        max_diff = float(max_diff)
+        upper_ll = float(upper_ll)
+        lower_ll = float(lower_ll)
+        slopedev = float(slopedev)
+        vardiff = float(vardiff)
+
 
         df = utils.read_df(contents, filename)
         df = df[(df.index >= start_date) & (df.index <= end_date)]
         df = df[df.index.minute % freq == 0]
-        is_clear, components, _ = \
+        is_clear, components, alpha = \
             cs_utils.detect_clearsky(df['GHI'], df['GHIcs'], df.index,
                                      window_length=window_length, mean_diff=mean_diff,
                                      max_diff=max_diff, upper_line_length=upper_ll, lower_line_length=lower_ll,
                                      slope_dev=slopedev, var_diff=vardiff, return_components=True)
 
+        df['GHIcs'] = df['GHIcs'] * alpha
         fig = tls.make_subplots(rows=2, cols=1, shared_xaxes=True)
 
         plots = []

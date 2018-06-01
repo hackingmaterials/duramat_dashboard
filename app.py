@@ -16,7 +16,7 @@ app = dash.Dash('auth')
 auth = dash_auth.BasicAuth(app, users_passwords)
 app.config.suppress_callback_exceptions = True
 app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
-app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/brPBPO.css"})
+# app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/brPBPO.css"}) # loading screen
 
 # Connect MongoDB
 user = os.environ.get('MONGOD_DURAMAT_USER')
