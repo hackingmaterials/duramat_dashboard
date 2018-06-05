@@ -7,6 +7,8 @@ import dash_html_components as html
 
 from . import degradation_functions as deg
 
+import pandas as pd
+
 
 def add_callbacks(app, db_handler):
     metadata = db_handler.get_system_metadata()
@@ -52,87 +54,63 @@ def add_callbacks(app, db_handler):
 
     @app.callback(
         Output('degradation-metadata_table', 'selected_row_indices'),
-        [Input('degradation-map', 'clickData'),
-         Input('degradation-map', 'selectedData'),
-         Input('degradation-metadata_table', 'rows')],
-        [State('degradation-metadata_table', 'selected_row_indices')]
-    )
-    def get_clicked_points(clicked, selected, rows, table_prev):
-        """Adds points that have been clicked to a list (or removes them if they have already been clicked).
+        [Input('degradation-map', 'clickData')],
+        [State('datatable-gapminder', 'selected_row_indices')])
+    def update_selected_row_indices(clickData, selected_row_indices):
+        if clickData:
+            for point in clickData['points']:
+                if point['pointNumber'] in selected_row_indices:
+                    selected_row_indices.remove(point['pointNumber'])
+                else:
+                    selected_row_indices.append(point['pointNumber'])
+        return selected_row_indices
 
-        Parameters
-        ----------
-        clicked
-            Data from a mouse click.
-        previous
-            Previously clicked points.
+    # @app.callback(Output('degradation-selected', 'children'),
+    #               [Input('degradation-metadata_table', 'rows'),
+    #                Input('degradation-metadata_table', 'selected_row_indices')])
+    # def make_individual_figure(rows, selected_row_indices):
+    #     """Plot all clicked points.
 
-        Returns
-        -------
-        clicked_points
-            JSON encoded list
-        """
+    #     Parameters
+    #     ----------
+    #     points
+    #         List of clicked points
 
-        if selected is None:
-            selected = []
-        else:
-            selected = [i['pointNumber'] for i in selected['points']]
-            # selected = [i['customdata'] for i in selected['points']]
+    #     Returns
+    #     -------
+    #     div
+    #         html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+    #     """
+    #     site_ids = [rows[i]['ID'] for i in selected_row_indices]
+    #     # site_ids = [metadata.iloc[i]['ID'] for i in selected_row_indices]
 
-        if clicked is None:
-            clicked = []
-        else:
-            clicked = [i['pointNumber'] for i in clicked['points']]
-            # clicked = [i['customdata'] for i in clicked['points']]
+    #     if not site_ids:
+    #         return html.Div(style={'display': 'none'})
 
-        # site_locs = set(selected + clicked)
-        # site_locs = np.argwhere(rows['ID'].isin(site_locs))
-        # site_locs = [i for i in set(selected + clicked) if i in [x['ID'] for x in rows]]
-        # site_locs = sorted(np.argwhere(np.in1d(site_locs, set(selected + clicked))).flatten())
-        # site_locs = sorted(np.argwhere(metadata['ID'].isin(set(selected + clicked))).flatten())
+    #     plots = []
+    #     systems_loc = db_handler.get_system_data(site_ids, allow_add=True)
+    #     for idx in site_ids:
+    #         df = systems_loc[idx]
+    #         plots.append(go.Scatter(x=df.index, y=df['Power(W) norm'], name=idx))
 
-        for point in set(selected + clicked):
-            if point in table_prev:
-                table_prev.remove(point)
-            else:
-                table_prev.append(point)
-
-        return table_prev
-
-    # @app.callback(
-    #     Output('degradation-hidden', 'children'),
-    #     [Input('degradation-metadata_table', 'selected_row_indices')]
-    # )
-    # def do_absolutely_nothing(selected):
-    #     print(selected)
-
-    # @app.callback(
-    #     Output('degradation-map', 'figure'),
-    #     [Input('degradation-metadata_table', 'selected_row_indices')]
-    # )
-    # def update_map_selected(points):
-    #     print('recoloring point numbers: {}'.format(points))
-    #     colors = np.zeros(len(metadata),)
-    #     colors[points] = 1
-    #     cdict = {0: '#1f77b4', 1: '#d62728'}
-    #     colors = [cdict[i] for i in colors]
-    #     symbols = ['circle-open' for _ in metadata]
-    #     # layout = go.Layout(mapbox={'accesstoken': mapbox_access_token, 'style': 'light'}, hovermode='closest',
-    #     #                    autosize=True, height=500, showlegend=False,
-    #     #                    margin={'r': 20, 't': 40, 'b': 20, 'l': 20, 'pad': 0})
+    #     if plots:
+    #         figure = {'data': plots,
+    #                   'layout': go.Layout(showlegend=True, autosize=True, height=500,
+    #                                       # margin={'r': 20, 't': 40, 'b': 20, 'l': 60, 'pad': 0},
+    #                                       yaxis={'title': 'Wh/W'})}
+    #         div = html.Div([
+    #             html.H3('Selected Sites', style={'textAlign': 'center', 'margin': {'t': 10}}),
+    #             dcc.Graph(id='degradation-selected_graph', figure=figure),
+    #         ])
+    #     else:
+    #         div = html.Div(style={'display': 'none'})
     #
-    #     figure={'data': [go.Scattermapbox(lon=metadata['Longitude'].values,
-    #                                       lat=metadata['Latitude'].values,
-    #                                       customdata=metadata['ID'], text=metadata['text'],
-    #                                       marker={'color': colors, 'size': 6})],
-    #             'layout': map_layout}
-
-    #     return figure
-
+    #     return div
 
     @app.callback(Output('degradation-selected', 'children'),
-                  [Input('degradation-metadata_table', 'selected_row_indices')])
-    def make_individual_figure(points):
+                  [Input('degradation-metadata_table', 'rows'),
+                   Input('degradation-metadata_table', 'selected_row_indices')])
+    def make_individual_figure(rows, selected_row_indices):
         """Plot all clicked points.
 
         Parameters
@@ -145,24 +123,35 @@ def add_callbacks(app, db_handler):
         div
             html.Div object that is empty (if no points clicked) or displays a plot of all sites.
         """
-        site_ids = [metadata.iloc[i]['ID'] for i in points]
+        site_ids = [rows[i]['ID'] for i in selected_row_indices]
+        # site_ids = [metadata.iloc[i]['ID'] for i in selected_row_indices]
 
         if not site_ids:
             return html.Div(style={'display': 'none'})
 
         plots = []
         systems_loc = db_handler.get_system_data(site_ids, allow_add=True)
+        vals = {}
         for idx in site_ids:
-            df = systems_loc[idx]
-            plots.append(go.Scatter(x=df.index, y=df['Power(W) norm'], name=idx))
+            ts = systems_loc[idx]
+            ts = ts[ts['Power(W) norm'] > 0]
+            ts = ts.resample('W').median()
+            ts.index = [i.date() for i in ts.index]
+            vals[idx] = ts['Power(W) norm']
+
+        df2 = pd.DataFrame.from_dict(vals, orient='index')
+        df2 = df2.T
+        df2 = df2.sort_index()
+
+        plots = [go.Heatmap(x=df2.index, y=['[{}]'.format(i) for i in df2.keys()], z=df2.values.T,
+                            colorbar={'title': 'W/Wp', 'titleside': 'right'})]
+        layout = go.Layout(xaxis={'title': 'Date'}, yaxis={'title': 'System ID'})
 
         if plots:
             figure = {'data': plots,
-                      'layout': go.Layout(showlegend=True, autosize=True, height=500,
-                                          # margin={'r': 20, 't': 40, 'b': 20, 'l': 60, 'pad': 0},
-                                          yaxis={'title': 'Wh/W'})}
+                      'layout': layout}
             div = html.Div([
-                html.H3('Selected Sites', style={'textAlign': 'center'}),
+                html.H3('Selected Sites', style={'textAlign': 'center', 'margin': {'t': 10}}),
                 dcc.Graph(id='degradation-selected_graph', figure=figure),
             ])
         else:
@@ -170,62 +159,18 @@ def add_callbacks(app, db_handler):
 
         return div
 
-    # @app.callback(Output('degradation-hoverplot', 'figure'),
-    #               [Input('degradation-map', 'hoverData')])
-    # def make_individual_figure_preview(map_graph_hover):
-    #     """Create preview of sites based on Wh/Were mouse is hovering over map.
-    #
-    #     Parameters
-    #     ----------
-    #     map_graph_hover
-    #         Data from nearest point mouse is hovering over
-    #
-    #     Returns
-    #     -------
-    #     figure
-    #         Plotly figure (empty if not hovering over a point).
-    #     """
-    #     print(map_graph_hover)
-    #     if map_graph_hover is None:
-    #         map_graph_hover = {'points': [{'curveNumber': 4,
-    #                                         'pointNumber': 569,
-    #                                         'customdata': None}]}
-    #
-    #     chosen_lat = [point['lat'] for point in map_graph_hover['points']]
-    #     chosen_lon = [point['lon'] for point in map_graph_hover['points']]
-    #     filtered = metadata[(metadata['Latitude'] == chosen_lat) &
-    #                         (metadata['Longitude'] == chosen_lon)]
-    #     datapoints = filtered['ID'].values
-    #     site_ids = sorted(datapoints)
-    #     plots = []
-    #     systems_loc = db_handler.get_system_data(site_ids, allow_add=False)
-    #     for idx in site_ids:
-    #         df = systems_loc[idx]
-    #         plots.append(go.Scatter(x=df.index, y=df['Power(W) norm'], name=idx))
-    #
-    #     layout = go.Layout(showlegend=True, autosize=True, height=500,
-    #                        margin={'r': 20, 't': 40, 'b': 20, 'l': 60, 'pad': 0},
-    #                        yaxis={'title': 'Wh/W'})
-    #     if plots:
-    #         figure = {'data': plots, 'layout': layout}
-    #     else:
-    #         layout['showlegend'] = False
-    #         figure = {'data': [go.Scatter(x=filler.index, y=filler['dc_power_norm'])], 'layout': layout}
-    #
-    #     return figure
-
-
     @app.callback(
         Output('degradation-deg_plots', 'children'),
-        [Input('degradation-metadata_table', 'selected_row_indices'),
-         Input('degradation-insol_low', 'value'),
-         Input('degradation-insol_hi', 'value'),
-         Input('degradation-prod_low', 'value'),
-         Input('degradation-prod_hi', 'value'),
-         Input('degradation-run_button', 'n_clicks')],
-        [State('degradation-deg_modes', 'value')]
+        [Input('degradation-run_button', 'n_clicks')],
+        [State('degradation-deg_modes', 'value'),
+         State('degradation-metadata_table', 'rows'),
+         State('degradation-metadata_table', 'selected_row_indices'),
+         State('degradation-insol_low', 'value'),
+         State('degradation-insol_hi', 'value'),
+         State('degradation-prod_low', 'value'),
+         State('degradation-prod_hi', 'value')]
     )
-    def update_graph(points, insol_low, insol_hi, prod_low, prod_hi, n_clicks, deg_mode):
+    def update_graph(n_clicks, deg_mode, rows, selected_row_indices, insol_low, insol_hi, prod_low, prod_hi):
         """Display smoothed trends and degradation rate statistics for 'clicked' sites.
 
         Parameters:
@@ -240,7 +185,8 @@ def add_callbacks(app, db_handler):
             html Div that includes 2 rows of charts  - smoothed/trended systems over time and
             summary statistics of the degrdation rates by site and method.
         """
-        site_ids = [metadata.iloc[i]['ID'] for i in points]
+        # site_ids = [metadata.iloc[i]['ID'] for i in points]
+        site_ids = [rows[i]['ID'] for i in selected_row_indices]
 
         if not site_ids:
             return
@@ -337,15 +283,15 @@ def add_callbacks(app, db_handler):
         else:
             return html.Div([big_plot])
 
-    @app.callback(
-        Output('degradation-run_button', 'n_clicks'),
-        [Input('degradation-metadata_table', 'selected_row_indices'),
-         Input('degradation-insol_low', 'value'),
-         Input('degradation-insol_hi', 'value'),
-         Input('degradation-prod_low', 'value'),
-         Input('degradation-prod_hi', 'value'),
-         Input('degradation-deg_modes', 'value')],
-        [State('degradation-run_button', 'n_clicks')]
-    )
-    def reset_run_button(points, insol_low, insol_hi, prod_low, prod_hi, deg_modes, prev_clicks):
-        return 0
+    # @app.callback(
+    #     Output('degradation-run_button', 'n_clicks'),
+    #     [Input('degradation-metadata_table', 'selected_row_indices'),
+    #      Input('degradation-insol_low', 'value'),
+    #      Input('degradation-insol_hi', 'value'),
+    #      Input('degradation-prod_low', 'value'),
+    #      Input('degradation-prod_hi', 'value'),
+    #      Input('degradation-deg_modes', 'value')],
+    #     [State('degradation-run_button', 'n_clicks')]
+    # )
+    # def reset_run_button(points, insol_low, insol_hi, prod_low, prod_hi, deg_modes, prev_clicks):
+    #     return 0

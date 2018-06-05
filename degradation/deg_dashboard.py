@@ -17,8 +17,8 @@ def serve_layout(db_handler):
     mapbox_access_token = os.environ['MAPBOX_KEY']
     metadata = db_handler.get_system_metadata()
     map_layout = go.Layout(mapbox={'accesstoken': mapbox_access_token, 'bearing': 0, 'center': {'lat':38, 'lon': -96},
-                       'pitch': 0, 'zoom': 2.5, 'style': 'light'}, hovermode='closest', autosize=True, height=450,
-                       showlegend=False,  margin={'r': 20, 't': 40, 'b': 20, 'l': 20, 'pad': 0})
+                       'pitch': 0, 'zoom': 2.5, 'style': 'light'}, hovermode='closest', autosize=True, height=480,
+                       showlegend=False, margin={'r': 0, 't': 0, 'b': 0, 'l': 0, 'pad': 0})
 
     # degradation page layout
     app_layout =  \
@@ -31,13 +31,6 @@ def serve_layout(db_handler):
                    'sites, scroll down for additional options and analysis.  Summary statistics for the sites you '
                    'have chosen will be presented at the end.'),
             html.Div([html.H3('Systems overview', style={'textAlign': 'center'}),
-            # html.Div([html.H3('Site Map', style={'textAlign': 'center'}),
-            # html.Div([html.P('Hover over site to see preview.  If nothing shows, then the site is missing production data. '
-            #                  'Click on a point to enable further analysis.  Clicking point again will remove it from '
-            #                  'further analysis.', style={'textAlign': 'center'})]),
-            # html.Div([html.P('Select sites for further analysis by clicking them on the map or selecting them '
-            #                  'in the adjacent table.  Scroll down once the desired sites have been slected.',
-            #                  style={'textAlign': 'center'})]),
             html.Div([
                 html.Div([
                         dcc.Graph(id='degradation-map', animate=True,
@@ -47,21 +40,17 @@ def serve_layout(db_handler):
                                           'layout': map_layout})
                 ], className='six columns'),
                 html.Div([
-                    html.Div([
-                    ], style={'height': '38px'}),
                     dt.DataTable(
-                        rows=metadata[['ID', 'System Name', 'System Size(W)', 'State',
-                                       'County', 'Latitude', 'Longitude', 'Active Days']].to_dict('records'),
-                        columns=['ID', 'System Name', 'System Size(W)', 'State',
-                                 'County', 'Latitude', 'Longitude', 'Active Days'],
+                        rows=metadata[['ID', 'System Size(W)', 'State', 'County', 'Active Days']].to_dict('records'),
+                        columns=['ID', 'System Size(W)', 'State', 'County', 'Active Days'],
                         row_selectable=True,
+                        sortable=True,
+                        filterable=True,
                         selected_row_indices=[],
-                        sortable=False,
-                        filterable=False,
-                        editable=False,
                         id='degradation-metadata_table',
                     ),
-                ], className='six columns', style={'margin': {'r': 20, 't': 40, 'b': 20, 'l': 20, 'pad': 0}, 'height': '500px'}),
+                ], className='six columns', style={'margin': {'r': 0, 't': 0, 'b': 0, 'l': 0}}),
+                # ], className='six columns', style={'margin': {'r': 20, 't': 40, 'b': 20, 'l': 20, 'pad': 0}, 'height': '500px'}),
             ], className='row'),
         ]),
         html.Div(id='degradation-selected'),
