@@ -26,7 +26,12 @@ def trendline(df, column='Power(W) norm'):
     yearly_coef: float
         Yearly degradation rate.
     """
-    tmp = df[df['mask']][column]
+    try:
+        df = df[df['mask']]
+    except KeyError:
+        pass
+    # tmp = df[df['mask']][column]
+    tmp = df[column]
     tmp = tmp.dropna()
     # print(tmp.index)
     day_vec = tmp.index - tmp.index[0]
@@ -58,7 +63,10 @@ def csd(df, column='Power(W) norm'):
     df: pd.DataFrame
         Input df with addtional columns for trend, seasonality, and residuals.
     """
-    df = df[df['mask']]
+    try:
+        df = df[df['mask']]
+    except KeyError:
+        pass
     df[column] = df[column].fillna(method='bfill')
     df[column] = df[column].fillna(method='ffill')
     ser = df[df.index.isin(pd.date_range(df[column].first_valid_index(), df[column].last_valid_index()))][column]
@@ -87,7 +95,11 @@ def yoy(df, column='Power(W) norm'):
     rate: float
         Yearly degradation.
     """
-    df = df[df['mask']]
+    try:
+        df = df[df['mask']]
+    except KeyError:
+        pass
+    # df = df[df['mask']]
     diffs = (df[column].shift(365, freq='D') - df[column]).dropna()
     rate = np.median(diffs)
     return diffs, rate
@@ -105,7 +117,11 @@ def rolling_mean(df, column='Power(W) norm'):
     -------
     df: pd.DataFrame
     """
-    df = df[df['mask']]
+    try:
+        df = df[df['mask']]
+    except KeyError:
+        pass
+    # df = df[df['mask']]
     if column + ' trend rolling mean' in df.keys():
         return df
     df[column + ' trend rolling mean'] = df[column].rolling('90D').mean()
@@ -124,7 +140,11 @@ def lowess(df, column='Power(W) norm'):
     -------
     df: pd.DataFrame
     """
-    df = df[df['mask']]
+    try:
+        df = df[df['mask']]
+    except KeyError:
+        pass
+    # df = df[df['mask']]
     if column + ' trend lowess' in df.keys():
         return df
     tmp = sm.nonparametric.lowess(df[column].values, np.arange(len(df)))[:, 1]
