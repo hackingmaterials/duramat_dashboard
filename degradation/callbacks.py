@@ -5,6 +5,7 @@ from plotly import tools
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.figure_factory as ff
 
 from . import degradation_functions as deg
 
@@ -13,6 +14,7 @@ import pandas as pd
 
 def add_callbacks(app, db_handler):
     metadata = db_handler.get_system_metadata()
+
     @app.callback(
         Output('degradation-selected', 'style'),
         [Input('degradation-metadata_table', 'selected_row_indices')]
@@ -149,30 +151,37 @@ def add_callbacks(app, db_handler):
 
         vals = {}
         for system_id, df in dfdict.items():
-            if smoother == 'rolling':
-                df = deg.rolling_mean(df)
-                col = 'Power(W) norm trend rolling mean'
-            elif smoother == 'csd':
-                df = deg.csd(df)
-                col = 'Power(W) norm trend csd'
-            elif smoother == 'lowess':
-                df = deg.lowess(df)
-                col = 'Power(W) norm trend lowess'
-            elif smoother == 'ols':
-                df, eqn = deg.trendline(df)
-                col = 'Power(W) norm trend ols'
-            else:
-                col = 'Power(W) norm'
-            vals[system_id] = df[col].resample('W').median()
+            try:
+                if smoother == 'rolling':
+                    df = deg.rolling_mean(df)
+                    # col = 'Power(W) norm trend rolling mean'
+                elif smoother == 'csd':
+                    df = deg.csd(df)
+                    # col = 'Power(W) norm trend csd'
+                else:
+                    pass
+                tmp = df.resample('W').median()
+                tmp.index = tmp.index.map(lambda x: x.date())
+                vals[system_id] = tmp
+            except:
+                print(system_id)
 
         df2 = pd.DataFrame.from_dict(vals, orient='index')
         df2 = df2.T
         df2 = df2.sort_index()
 
+        hovertext = []
+        for yi, yy in enumerate(df2.keys()):
+            hovertext.append([])
+            for xi, xx in enumerate(df2.index):
+                text = 'System ID: {}<br />Date: {}<br />Performance: {:.3f}'.format(yy, xx, df2.values[xi, yi])
+                hovertext[-1].append(text)
+
         plots = [go.Heatmap(x=df2.index, y=['[{}]'.format(i) for i in df2.keys()], z=df2.values.T,
-                            colorbar={'title': 'W/Wp', 'titleside': 'right'})]
-        layout = go.Layout(xaxis={'title': 'Date'}, yaxis={'title': 'System ID'},
-                           title='Performance of {} selected sites'.format(len(site_ids)))
+                            colorbar={'title': 'Normalized Performance', 'titleside': 'right'},
+                            hoverinfo='text', text=hovertext, colorscale='Reds')]
+        layout = go.Layout(xaxis={'title': 'Date', 'showgrid': False}, yaxis={'title': 'System ID', 'showgrid': False},
+                           title='Performance of {} selected sites'.format(len(vals)))
 
         if plots:
             figure = {'data': plots,
@@ -181,6 +190,158 @@ def add_callbacks(app, db_handler):
             figure = {}
 
         return figure
+
+    @app.callback(Output('degradation-deg_modes_histogram', 'figure'),
+                  [Input('degradation-metadata_table', 'rows'),
+                   Input('degradation-metadata_table', 'selected_row_indices')])
+    def make_deg_modes_hist(rows, selected_row_indices):
+        """Plot all clicked points.
+
+        Parameters
+        ----------
+        points
+            List of clicked points
+
+        Returns
+        -------
+        div
+            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        """
+        site_ids = [rows[i]['ID'] for i in selected_row_indices]
+
+        tmp_meta = metadata.where(metadata['ID'].isin(site_ids)).dropna(how='any')
+
+        traces = []
+        names = []
+        for val, name in zip(['ols_rd', 'csd_rd', 'yoy_rd'], ['OLS', 'CSD', 'YOY']):
+            # traces.append(go.Histogram(x=tmp_meta[val], name=name))
+            traces.append(tmp_meta[val].values)
+            names.append(name)
+
+        # layout = go.Layout(title='Population degradation rates',
+        #                    xaxis={'title': 'Degradation rate (%/year)'}, yaxis={'title': 'System count'})
+
+        fig = ff.create_distplot(traces, names, bin_size=.2)
+        return fig
+        # return {'data': traces, 'layout': layout}
+
+    @app.callback(Output('degradation-deg_modes_cumhistogram', 'figure'),
+                  [Input('degradation-metadata_table', 'rows'),
+                   Input('degradation-metadata_table', 'selected_row_indices')])
+    def make_deg_modes_cumhist(rows, selected_row_indices):
+        """Plot all clicked points.
+
+        Parameters
+        ----------
+        points
+            List of clicked points
+
+        Returns
+        -------
+        div
+            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        """
+        site_ids = [rows[i]['ID'] for i in selected_row_indices]
+
+        tmp_meta = metadata.where(metadata['ID'].isin(site_ids)).dropna(how='any').copy()
+
+        traces = []
+        for val, name in zip(['ols_rd', 'csd_rd', 'yoy_rd'], ['OLS', 'CSD', 'YOY']):
+            traces.append(go.Histogram(x=tmp_meta[val], name=name, cumulative={'enabled': True}))
+            break
+
+        layout = go.Layout(title='Population degradation rates',
+                           xaxis={'title': 'Degradation rate (%/year)'}, yaxis={'title': 'System count'})
+
+        return {'data': traces, 'layout': layout}
+
+    @app.callback(Output('degradation-deg_modes_by_site', 'figure'),
+                  [Input('degradation-metadata_table', 'rows'),
+                   Input('degradation-metadata_table', 'selected_row_indices')])
+    def make_deg_modes_by_site(rows, selected_row_indices):
+        """Plot all clicked points.
+
+        Parameters
+        ----------
+        points
+            List of clicked points
+
+        Returns
+        -------
+        div
+            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        """
+        site_ids = [rows[i]['ID'] for i in selected_row_indices]
+
+        tmp_meta = metadata.where(metadata['ID'].isin(site_ids)).dropna(how='any').copy()
+
+        traces = []
+        for val, name in zip(['ols_rd', 'csd_rd', 'yoy_rd'], ['OLS', 'CSD', 'YOY']):
+            traces.append(go.Scatter(x=tmp_meta['ID'].apply(lambda x: '[{}]'.format(int(x))), y=tmp_meta[val],
+                                     name=name, mode='markers'))
+
+        layout = go.Layout(title='System degradation rates', yaxis={'title': 'Degradation rate (%/year)'}, xaxis={'title': 'System ID'})
+
+        return {'data': traces, 'layout': layout}
+
+    @app.callback(Output('degradation-meta_figure', 'children'),
+                  [Input('degradation-metadata_table', 'rows'),
+                   Input('degradation-metadata_table', 'selected_row_indices')])
+    def make_deg_meta_figure(rows, selected_row_indices):
+        """Plot all clicked points.
+
+        Parameters
+        ----------
+        points
+            List of clicked points
+
+        Returns
+        -------
+        div
+            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        """
+        site_ids = [rows[i]['ID'] for i in selected_row_indices]
+
+        tmp_meta = metadata.where(metadata['ID'].isin(site_ids)).dropna(how='any').copy()
+
+        traces = {}
+        for meta in ['State', 'Climate']:
+            traces[meta] = []
+            traces[meta].append(go.Box(x=tmp_meta[meta], y=tmp_meta['ols_rd'], name='OLS'))
+            traces[meta].append(go.Box(x=tmp_meta[meta], y=tmp_meta['csd_rd'], name='CSD'))
+            traces[meta].append(go.Box(x=tmp_meta[meta], y=tmp_meta['yoy_rd'], name='YOY'))
+
+        for meta in ['Size (W)', 'Active Days']:
+            tmp_meta['interval'] = pd.cut(tmp_meta[meta], 10)
+            tmp_meta = tmp_meta.sort_values('interval')
+            tmp_meta['interval'] = tmp_meta['interval'].astype(str)
+            traces[meta] = []
+            traces[meta].append(go.Box(x=tmp_meta['interval'], y=tmp_meta['ols_rd'], name='OLS'))
+            traces[meta].append(go.Box(x=tmp_meta['interval'], y=tmp_meta['csd_rd'], name='CSD'))
+            traces[meta].append(go.Box(x=tmp_meta['interval'], y=tmp_meta['yoy_rd'], name='YOY'))
+
+        layout = go.Layout(boxmode='group')
+        layouts = {}
+        layouts['State'] = go.Layout(boxmode='group', xaxis={'title': 'State'}, yaxis={'title': 'Degradation rate (%/year)'})
+        layouts['Size (W)'] = go.Layout(boxmode='group', xaxis={'title': 'Size (W)'}, yaxis={'title': 'Degradation rate (%/year)'})
+        layouts['Climate'] = go.Layout(boxmode='group', xaxis={'title': 'Climate'}, yaxis={'title': 'Degradation rate (%/year)'})
+        layouts['Active Days'] = go.Layout(boxmode='group', xaxis={'title': 'Active Days'}, yaxis={'title': 'Degradation rate (%/year)'})
+
+        children1 = [
+            html.Div(dcc.Graph(figure={'data': traces[i], 'layout': layouts[i]}, id='degradation-{}_figure'.format(i)), className='six columns')
+            for i in ['State', 'Climate']
+        ]
+
+        children2 = [
+            html.Div(dcc.Graph(figure={'data': traces[i], 'layout': layouts[i]}, id='degradation-{}_figure'.format(i)), className='six columns')
+            for i in ['Size (W)', 'Active Days']
+        ]
+
+        final = html.Div([
+            html.Div(children1, className='row'),
+            html.Div(children2, className='row')
+        ])
+        return final
 
     # @app.callback(
     #     Output('degradation-deg_plots', 'children'),

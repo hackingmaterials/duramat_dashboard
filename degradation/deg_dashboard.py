@@ -36,16 +36,16 @@ def serve_layout(db_handler):
             html.Div([
                 html.Div([
                         dcc.Graph(id='degradation-map', animate=True,
-                                  figure={'data': [go.Scattermapbox(lon=metadata['Longitude'].values,
-                                                                    lat=metadata['Latitude'].values,
+                                  figure={'data': [go.Scattermapbox(lon=metadata['longitude (deg)'].values,
+                                                                    lat=metadata['latitude (deg)'].values,
                                                                     customdata=metadata['ID'], text=metadata['text'],
-                                                                    marker={'color': np.log(metadata['System Size(W)'])}),],
+                                                                    marker={'color': np.log(metadata['Size (W)'])}),],
                                           'layout': map_layout})
                 ], className='six columns'),
                 html.Div([
                     dt.DataTable(
-                        rows=metadata[['ID', 'System Size(W)', 'State', 'County', 'Active Days']].to_dict('records'),
-                        columns=['ID', 'System Size(W)', 'State', 'County', 'Active Days'],
+                        rows=metadata[['ID', 'Size (W)', 'State', 'County', 'Climate', 'Active Days']].to_dict('records'),
+                        columns=['ID', 'Size (W)', 'State', 'County', 'Climate', 'Active Days'],
                         row_selectable=True,
                         sortable=True,
                         filterable=True,
@@ -64,9 +64,7 @@ def serve_layout(db_handler):
                     id='degradation-data_smoother',
                     options=[{'label': 'Raw data  ', 'value': 'raw'},
                              {'label': 'Rolling mean  ', 'value': 'rolling'},
-                             {'label': 'Classical seasonal decomposition  ', 'value': 'csd'},
-                             {'label': 'Locally weigthed scatterplot smoothing  ', 'value': 'lowess'},
-                             {'label': 'Ordinary least squares', 'value': 'ols'}],
+                             {'label': 'Classical seasonal decomposition  ', 'value': 'csd'}],
                     value='raw',
                     labelStyle={'display': 'inline-block'}
                 )
@@ -75,6 +73,15 @@ def serve_layout(db_handler):
                 dcc.Graph(id='degradation-selected_graph')
             ]),
         ], style={'visibility': 'hidden'}),
+        html.Div(id='degradation-deg_modes_master', children=[
+            html.Div([
+                dcc.Graph(id='degradation-deg_modes_histogram')
+            ], className='six columns'),
+            html.Div([
+                dcc.Graph(id='degradation-deg_modes_by_site')
+            ], className='six columns'),
+        ], className='row'),
+        html.Div(id='degradation-meta_figure'),
         # html.Div(id='degradation-deg_modes_master', children=[
         #     html.Div([
         #         html.H3('Set filters and select rate calculation method', style={'textAlign': 'center'}),

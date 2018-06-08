@@ -31,7 +31,12 @@ def trendline(df, column='Power(W) norm'):
     except KeyError:
         pass
     # tmp = df[df['mask']][column]
-    tmp = df[column]
+    # df = pd.DataFrame(df.values, columns=['orig'], index=df.index)
+    df.name = 'orig'
+    df = pd.DataFrame(df)
+    print(df)
+    tmp = df
+    # tmp = df[column]
     tmp = tmp.dropna()
     # print(tmp.index)
     day_vec = tmp.index - tmp.index[0]
@@ -42,11 +47,12 @@ def trendline(df, column='Power(W) norm'):
     lr.fit(x, y)
     full_day_vec = df.index - df.index[0]
     full_day_vec = full_day_vec.days.values
-    df[column + ' trend ols'] = lr.predict(full_day_vec.reshape(-1, 1))
+    df['trend ols'] = lr.predict(full_day_vec.reshape(-1, 1))
     daily_coef = lr.coef_[0][0]
     daily_intercept = lr.intercept_[0]
     yearly_coef = daily_coef * 365
-    return df, yearly_coef
+    return df['trend ols'], yearly_coef
+    # `return df, yearly_coef
 
 
 def csd(df, column='Power(W) norm'):
@@ -63,20 +69,33 @@ def csd(df, column='Power(W) norm'):
     df: pd.DataFrame
         Input df with addtional columns for trend, seasonality, and residuals.
     """
-    try:
-        df = df[df['mask']]
-    except KeyError:
-        pass
-    df[column] = df[column].fillna(method='bfill')
-    df[column] = df[column].fillna(method='ffill')
-    ser = df[df.index.isin(pd.date_range(df[column].first_valid_index(), df[column].last_valid_index()))][column]
-    ser = ser.interpolate()
-    res = sm.tsa.seasonal_decompose(ser, two_sided=True, freq=365)
+    # try:
+    #     df = df[df['mask']]
+    # except KeyError:
+    #     pass
+    # df[column] = df[column].fillna(method='bfill')
+    # df[column] = df[column].fillna(method='ffill')
+    # ser = df[df.index.isin(pd.date_range(df[column].first_valid_index(), df[column].last_valid_index()))][column]
+    # ser = ser.interpolate()
+    # res = sm.tsa.seasonal_decompose(ser, two_sided=True, freq=365)
+    # # res = sm.tsa.seasonal_decompose(df[column], two_sided=True, freq=365)
+    # df[column + ' trend csd'] = res.trend
+    # df[column + ' seasonality csd'] = res.seasonal
+    # df[column + ' residuals csd'] = res.resid
+    # return df
+    df = df.fillna(method='bfill')
+    df = df.fillna(method='ffill')
+    df = df[df.index.isin(pd.date_range(df.first_valid_index(), df.last_valid_index()))]
+    df = df.interpolate()
+    res = sm.tsa.seasonal_decompose(df, two_sided=True, freq=365)
+    df = res.trend
+    tmp = pd.DataFrame(df, columns=['orig'])
+    print(tmp)
     # res = sm.tsa.seasonal_decompose(df[column], two_sided=True, freq=365)
-    df[column + ' trend csd'] = res.trend
-    df[column + ' seasonality csd'] = res.seasonal
-    df[column + ' residuals csd'] = res.resid
-    return df
+    tmp['trend csd'] = res.trend
+    tmp['seasonality csd'] = res.seasonal
+    tmp['residuals csd'] = res.resid
+    return tmp['seasonality csd']
 
 
 def yoy(df, column='Power(W) norm'):
@@ -117,15 +136,15 @@ def rolling_mean(df, column='Power(W) norm'):
     -------
     df: pd.DataFrame
     """
-    try:
-        df = df[df['mask']]
-    except KeyError:
-        pass
+    # try:
+    #     df = df[df['mask']]
+    # except KeyError:
+    #     pass
     # df = df[df['mask']]
-    if column + ' trend rolling mean' in df.keys():
-        return df
-    df[column + ' trend rolling mean'] = df[column].rolling('90D').mean()
-    return df
+    # if column + ' trend rolling mean' in df.keys():
+    #     return df
+    # df[column + ' trend rolling mean'] = df[column].rolling('90D').mean()
+    return df.rolling('90D').mean()
 
 
 def lowess(df, column='Power(W) norm'):
@@ -147,6 +166,11 @@ def lowess(df, column='Power(W) norm'):
     # df = df[df['mask']]
     if column + ' trend lowess' in df.keys():
         return df
-    tmp = sm.nonparametric.lowess(df[column].values, np.arange(len(df)))[:, 1]
-    df[column + ' trend lowess'] = tmp
-    return df
+    tmp = pd.DataFrame(df, columns=['orig'])
+    print(tmp)
+    # tmp = sm.nonparametric.lowess(df[column].values, np.arange(len(df)))[:, 1]
+    # df[column + ' trend lowess'] = tmp
+    tmp = sm.nonparametric.lowess(tmp['orig'].values, np.arange(len(tmp)))[:, 1]
+    df['trend lowess'] = tmp
+    return df['trend lowess']
+    # return df

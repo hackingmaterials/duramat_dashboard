@@ -93,7 +93,7 @@ def display_page(pathname):
         return layout
 
 
-deg_db_handler = DBHandler(client.pvproduction.time_series)
+deg_db_handler = DBHandler(client.pvdata.appdata)
 deg_callbacks.add_callbacks(app, deg_db_handler)
 
 cs_callbacks.add_callbacks(app)
