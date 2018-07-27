@@ -35,6 +35,11 @@ from clearsky.clearsky_detection import cs_detection
 
 # def read_df(file, start_date, end_date, freq):
 def read_df(contents, filename):
+    """Read dataframe from a file.  Review dash tutorial on file uploading - mainly copied from there.
+
+    Returns:
+        dataframe of time-series values
+    """
     if contents is not None:
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)

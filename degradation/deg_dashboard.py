@@ -16,6 +16,14 @@ from app import client
 
 
 def serve_layout(db_handler):
+    """Serve the degradation page.
+
+    Args:
+        db_handler (DBHandler object): object to perform database queries.
+
+    Returns:
+        degradation app page.
+    """
     mapbox_access_token = os.environ['MAPBOX_KEY']
     metadata = db_handler.get_system_metadata()
     map_layout = go.Layout(mapbox={'accesstoken': mapbox_access_token, 'bearing': 0, 'center': {'lat':38, 'lon': -96},
@@ -75,7 +83,7 @@ def serve_layout(db_handler):
         ], style={'visibility': 'hidden'}),
         html.Div(id='degradation-deg_modes_master', children=[
             html.Div([
-                dcc.Graph(id='degradation-deg_modes_histogram')
+                dcc.Graph(id='degradation-deg_modes_cumhistogram')
             ], className='six columns'),
             html.Div([
                 dcc.Graph(id='degradation-deg_modes_by_site')

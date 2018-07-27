@@ -82,6 +82,26 @@ def add_callbacks(app):
     )
     def update_plot(click, contents, filename, start_date, end_date, freq, window_length, mean_diff,
                     max_diff, upper_ll, lower_ll, vardiff, slopedev):
+        """Redraw plot with updated parameters.
+
+        Args:
+            click: button clicked
+            contents: file contents (see dash tutorial on file uploading)
+            filename: file name (see dash dutorial on file uploading)
+            start_date: Beginning date
+            end_date:  Ending date
+            freq: data frequency (in minute)
+            window_length: window size (in minute) for PVLIB algorithm
+            mean_diff: cutoff for mean diff (see PVLIB)
+            max_diff: cutoff for max diff (see PVLIB)
+            upper_ll: cutoff for upper line length (see PVLIB)
+            lower_ll: cutoff for lower line length (see PVLIB)
+            vardiff: cutoff for vardiff (see PVLIB)
+            slopedev: cutoff for slopedev (see PVLIB)
+
+        Returns:
+            plot of clear periods and feature values (needs to be beautified)
+        """
         if click < 1:
             return
 

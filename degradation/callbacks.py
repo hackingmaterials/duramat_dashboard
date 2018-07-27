@@ -6,6 +6,8 @@ from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.figure_factory as ff
+from scipy.stats import norm
+import numpy as np
 
 from . import degradation_functions as deg
 
@@ -13,6 +15,15 @@ import pandas as pd
 
 
 def add_callbacks(app, db_handler):
+    """Bind callbacks to app.
+
+    Args:
+        app (Dash.app): web application object
+        db_handler (DBHander): object to perform db queries
+
+    Returns:
+        None
+    """
     metadata = db_handler.get_system_metadata()
 
     @app.callback(
@@ -22,14 +33,10 @@ def add_callbacks(app, db_handler):
     def make_deg_mode_dropdown(points):
         """Create dropdown menu of degradation rate calculation methods.
 
-        Parameters
-        ----------
-        sites
-            List of system_id values (if not empty, menu will show).
+        Args:
+            points (list): system_id values (if not empty, menu will show).
 
-        Returns
-        -------
-        style
+        Returns:
             Makes dropdown menu visible.
         """
         site_ids = [metadata.iloc[i]['ID'] for i in points]
@@ -49,16 +56,12 @@ def add_callbacks(app, db_handler):
     def make_deg_mode_dropdown(points, dummy_fig):
         """Create dropdown menu of degradation rate calculation methods.
 
-        Parameters
-        ----------
-        sites
-            List of system_id values (if not empty, menu will show).
-        dummy_fig
-            Figure that has no effect on functionality.  Included here to force a dependency that makes loading 'prettier'.
+        Args:
+            points (list): system_id values
+            dummy_fig (children): figure that has no effect on functionality - included here to force a dependency
+                                  that makes loading 'prettier'
 
-        Returns
-        -------
-        style
+        Returns:
             Makes dropdown menu visible.
         """
         site_ids = [metadata.iloc[i]['ID'] for i in points]
@@ -75,6 +78,15 @@ def add_callbacks(app, db_handler):
         [Input('degradation-map', 'clickData')],
         [State('datatable-gapminder', 'selected_row_indices')])
     def update_selected_row_indices(clickData, selected_row_indices):
+        """Add clicked sites to charts.
+
+        Args:
+            clickData (list): clicked sites
+            selected_row_indices (list): selected sites
+
+        Returns:
+            selected row indices
+        """
         if clickData:
             for point in clickData['points']:
                 if point['pointNumber'] in selected_row_indices:
@@ -132,14 +144,12 @@ def add_callbacks(app, db_handler):
     def make_individual_figure(rows, selected_row_indices, smoother):
         """Plot all clicked points.
 
-        Parameters
-        ----------
-        points
-            List of clicked points
+        Args:
+            rows (pd.DataFrame): metadata table
+            selected_row_indices (list): selected sites
+            smoother (str): which smoothing method for plot
 
-        Returns
-        -------
-        div
+        Returns:
             html.Div object that is empty (if no points clicked) or displays a plot of all sites.
         """
         site_ids = [rows[i]['ID'] for i in selected_row_indices]
@@ -195,17 +205,14 @@ def add_callbacks(app, db_handler):
                   [Input('degradation-metadata_table', 'rows'),
                    Input('degradation-metadata_table', 'selected_row_indices')])
     def make_deg_modes_hist(rows, selected_row_indices):
-        """Plot all clicked points.
+        """Make plot showing distribution of degradation rates and methods.
 
-        Parameters
-        ----------
-        points
-            List of clicked points
+        Args:
+            rows (dict): metadata table
+            selected_row_indices (list): selected sites
 
         Returns
-        -------
-        div
-            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+            plot that shows distribution of degradation rates
         """
         site_ids = [rows[i]['ID'] for i in selected_row_indices]
 
@@ -214,32 +221,29 @@ def add_callbacks(app, db_handler):
         traces = []
         names = []
         for val, name in zip(['ols_rd', 'csd_rd', 'yoy_rd'], ['OLS', 'CSD', 'YOY']):
-            # traces.append(go.Histogram(x=tmp_meta[val], name=name))
-            traces.append(tmp_meta[val].values)
-            names.append(name)
+            traces.append(go.Histogram(x=tmp_meta[val], name=name))
+            # traces.append(tmp_meta[val].values)
+            # names.append(name)
 
-        # layout = go.Layout(title='Population degradation rates',
-        #                    xaxis={'title': 'Degradation rate (%/year)'}, yaxis={'title': 'System count'})
+        layout = go.Layout(title='Population degradation rates',
+                           xaxis={'title': 'Degradation rate (%/year)'}, yaxis={'title': 'System count'})
 
-        fig = ff.create_distplot(traces, names, bin_size=.2)
-        return fig
-        # return {'data': traces, 'layout': layout}
+        # fig = ff.create_distplot(traces, names, bin_size=.2)
+        # return fig
+        return {'data': traces, 'layout': layout}
 
     @app.callback(Output('degradation-deg_modes_cumhistogram', 'figure'),
                   [Input('degradation-metadata_table', 'rows'),
                    Input('degradation-metadata_table', 'selected_row_indices')])
     def make_deg_modes_cumhist(rows, selected_row_indices):
-        """Plot all clicked points.
+        """Make plot of cumulative distribution of degradation rates/modes.
 
-        Parameters
-        ----------
-        points
-            List of clicked points
+        Args:
+            rows (dict): metadata table
+            selected_row_indices (list): selected sites
 
-        Returns
-        -------
-        div
-            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        Returns:
+            plot of cumulative distributions
         """
         site_ids = [rows[i]['ID'] for i in selected_row_indices]
 
@@ -247,8 +251,12 @@ def add_callbacks(app, db_handler):
 
         traces = []
         for val, name in zip(['ols_rd', 'csd_rd', 'yoy_rd'], ['OLS', 'CSD', 'YOY']):
-            traces.append(go.Histogram(x=tmp_meta[val], name=name, cumulative={'enabled': True}))
-            break
+            # xvals = sorted(tmp_meta[val].copy())
+            # traces.append(go.Scatter(x=xvals, y=norm.cdf(xvals), name=name))
+            # traces.append(go.Histogram(x=tmp_meta[val], name=name, cumulative={'enabled': True}, opacity=0))
+            # break
+            hist, bin_edges = np.histogram(tmp_meta[val], normed=True, bins=500)
+            traces.append(go.Scatter(x=bin_edges, y=np.cumsum(hist) * (bin_edges[1] - bin_edges[0]), name=name))
 
         layout = go.Layout(title='Population degradation rates',
                            xaxis={'title': 'Degradation rate (%/year)'}, yaxis={'title': 'System count'})
@@ -259,17 +267,14 @@ def add_callbacks(app, db_handler):
                   [Input('degradation-metadata_table', 'rows'),
                    Input('degradation-metadata_table', 'selected_row_indices')])
     def make_deg_modes_by_site(rows, selected_row_indices):
-        """Plot all clicked points.
+        """Make plot of degradation modes by site.
 
-        Parameters
-        ----------
-        points
-            List of clicked points
+        Args:
+            rows (dict): metadata table
+            selected_row_indices (list): selected sites
 
-        Returns
-        -------
-        div
-            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        Returns:
+            plot of degradatiom odes by site
         """
         site_ids = [rows[i]['ID'] for i in selected_row_indices]
 
@@ -290,15 +295,12 @@ def add_callbacks(app, db_handler):
     def make_deg_meta_figure(rows, selected_row_indices):
         """Plot all clicked points.
 
-        Parameters
-        ----------
-        points
-            List of clicked points
+        Args:
+            rows (dict): metadata table
+            selected_row_indices (list): selected sites
 
-        Returns
-        -------
-        div
-            html.Div object that is empty (if no points clicked) or displays a plot of all sites.
+        Returns:
+            plots of degradation rates and modes broken down by metadata tags (climate, location, system size, age)
         """
         site_ids = [rows[i]['ID'] for i in selected_row_indices]
 
