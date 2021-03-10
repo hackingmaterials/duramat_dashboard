@@ -11,7 +11,7 @@ dash-renderer==0.12.1
 dash-table-experiments==0.6.0
 decorator==4.2.1
 dnspython==1.15.0
-Flask==0.12.2
+Flask==1.0
 Flask-Compress==1.4.0
 Flask-Cors==3.0.3
 Flask-SeaSurf==0.2.2
