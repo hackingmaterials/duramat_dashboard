@@ -39,7 +39,7 @@ plotly==2.5.1
 prompt-toolkit==1.0.15
 ptyprocess==0.5.2
 pvlib==0.5.1
-Pygments==2.2.0
+Pygments==2.7.4
 pymongo==3.6.1
 pyparsing==2.2.0
 python-dateutil==2.7.2
