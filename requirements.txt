@@ -13,7 +13,7 @@ decorator==4.2.1
 dnspython==1.15.0
 Flask==0.12.2
 Flask-Compress==1.4.0
-Flask-Cors==3.0.3
+Flask-Cors==3.0.9
 Flask-SeaSurf==0.2.2
 gunicorn==19.7.1
 h5py==2.7.1
